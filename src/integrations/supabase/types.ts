@@ -17,6 +17,8 @@ export type Database = {
       agent_case_logs: {
         Row: {
           age_band: string | null
+          assigned_at: string | null
+          assigned_to_queue: string | null
           case_status: string | null
           closed_at: string | null
           contact_channel: string | null
@@ -38,6 +40,8 @@ export type Database = {
         }
         Insert: {
           age_band?: string | null
+          assigned_at?: string | null
+          assigned_to_queue?: string | null
           case_status?: string | null
           closed_at?: string | null
           contact_channel?: string | null
@@ -59,6 +63,8 @@ export type Database = {
         }
         Update: {
           age_band?: string | null
+          assigned_at?: string | null
+          assigned_to_queue?: string | null
           case_status?: string | null
           closed_at?: string | null
           contact_channel?: string | null
