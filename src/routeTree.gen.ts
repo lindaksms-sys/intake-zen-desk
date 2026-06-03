@@ -9,11 +9,18 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as IntakeRouteImport } from './routes/intake'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as ApiPublicIntakeRouteImport } from './routes/api/public/intake'
 
+const IntakeRoute = IntakeRouteImport.update({
+  id: '/intake',
+  path: '/intake',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
@@ -33,45 +40,67 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const ApiPublicIntakeRoute = ApiPublicIntakeRouteImport.update({
+  id: '/api/public/intake',
+  path: '/api/public/intake',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/intake': typeof IntakeRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/api/public/intake': typeof ApiPublicIntakeRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/intake': typeof IntakeRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/api/public/intake': typeof ApiPublicIntakeRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/intake': typeof IntakeRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/api/public/intake': typeof ApiPublicIntakeRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/dashboard'
+  fullPaths: '/' | '/auth' | '/intake' | '/dashboard' | '/api/public/intake'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/dashboard'
+  to: '/' | '/auth' | '/intake' | '/dashboard' | '/api/public/intake'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/intake'
     | '/_authenticated/dashboard'
+    | '/api/public/intake'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  IntakeRoute: typeof IntakeRoute
+  ApiPublicIntakeRoute: typeof ApiPublicIntakeRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/intake': {
+      id: '/intake'
+      path: '/intake'
+      fullPath: '/intake'
+      preLoaderRoute: typeof IntakeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth': {
       id: '/auth'
       path: '/auth'
@@ -100,6 +129,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/public/intake': {
+      id: '/api/public/intake'
+      path: '/api/public/intake'
+      fullPath: '/api/public/intake'
+      preLoaderRoute: typeof ApiPublicIntakeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -118,6 +154,8 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  IntakeRoute: IntakeRoute,
+  ApiPublicIntakeRoute: ApiPublicIntakeRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
