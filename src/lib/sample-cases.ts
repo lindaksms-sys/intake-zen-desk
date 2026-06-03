@@ -53,6 +53,7 @@ export const SAMPLE_CASES: CaseLog[] = [
     staff_summary: "Routine annual exam request. No symptoms reported.",
     patient_message: "Thanks — our scheduling team will reach out with Tuesday morning options.",
     human_readable_summary: "Routine annual exam booking request.",
+    case_status: "reviewed",
     created_at: minsAgo(58),
   },
   {
@@ -70,6 +71,7 @@ export const SAMPLE_CASES: CaseLog[] = [
     staff_summary: "Records release request. No clinical action required.",
     patient_message: "We'll forward your request to medical records — they'll be in touch within 2 business days.",
     human_readable_summary: "Administrative records transfer request.",
+    case_status: "closed",
     created_at: minsAgo(94),
   },
   {
