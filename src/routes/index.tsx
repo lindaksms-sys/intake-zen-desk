@@ -37,13 +37,29 @@ const FILTERS: { key: FilterKey; label: string }[] = [
 ];
 
 async function fetchCases(): Promise<CaseLog[]> {
+  const url = (supabase as unknown as { supabaseUrl?: string }).supabaseUrl;
   const { data, error } = await supabase
     .from("agent_case_logs")
     .select("*")
     .order("created_at", { ascending: false })
     .limit(200);
-  if (error) throw error;
-  return (data ?? []) as CaseLog[];
+  if (error) {
+    console.error("[Clinic Intake] agent_case_logs fetch FAILED", {
+      supabaseUrl: url,
+      message: error.message,
+      details: error.details,
+      hint: error.hint,
+      code: error.code,
+    });
+    throw error;
+  }
+  const rows = (data ?? []) as CaseLog[];
+  if (import.meta.env.DEV) {
+    console.debug(
+      `[Clinic Intake] agent_case_logs fetch OK — ${rows.length} row(s) from ${url}`,
+    );
+  }
+  return rows;
 }
 
 function Dashboard() {
@@ -95,7 +111,7 @@ function Dashboard() {
   const markReviewed = useMutation({
     mutationFn: async (c: CaseLog) => {
       const reviewed_at = new Date().toISOString();
-      if (usingSample || liveCases.length === 0) {
+      if (usingSample) {
         return { ...c, case_status: "reviewed", reviewed_at } as CaseLog;
       }
       const { data, error } = await supabase
@@ -104,12 +120,20 @@ function Dashboard() {
         .eq("id", c.id as never)
         .select()
         .single();
-      if (error) throw error;
+      if (error) {
+        console.error("[Clinic Intake] mark reviewed FAILED", {
+          id: c.id,
+          message: error.message,
+          code: error.code,
+          hint: error.hint,
+        });
+        throw error;
+      }
       return data as CaseLog;
     },
     onSuccess: (updated) => {
       toast.success("Case marked as reviewed");
-      if (usingSample || liveCases.length === 0) {
+      if (usingSample) {
         setSampleOverrides((prev) => ({
           ...prev,
           [String(updated.id)]: {
@@ -147,6 +171,18 @@ function Dashboard() {
               {usingSample && (
                 <span className="rounded-full border border-border bg-muted px-2.5 py-1 text-[11px] font-medium text-muted-foreground">
                   Showing sample data
+                </span>
+              )}
+              {import.meta.env.DEV && !isLoading && (
+                <span
+                  className={`rounded-full border px-2.5 py-1 text-[11px] font-mono ${
+                    isError
+                      ? "border-emergency/30 bg-emergency-soft text-emergency"
+                      : "border-border bg-muted text-muted-foreground"
+                  }`}
+                  title={isError ? "Supabase fetch failed" : "Supabase fetch OK"}
+                >
+                  {isError ? "fetch: error" : `fetch: ${liveCases.length} row(s)`}
                 </span>
               )}
               <div className="relative">
