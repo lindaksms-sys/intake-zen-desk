@@ -256,7 +256,11 @@ function Dashboard() {
       {/* Mobile detail drawer */}
       <Sheet open={isMobile && mobileOpen} onOpenChange={setMobileOpen}>
         <SheetContent side="right" className="w-full sm:max-w-lg p-0 overflow-y-auto">
-          <CaseDetail caseLog={selected} />
+          <CaseDetail
+            caseLog={selected}
+            onMarkReviewed={(c) => markReviewed.mutate(c)}
+            isMarking={markReviewed.isPending}
+          />
         </SheetContent>
       </Sheet>
     </div>
