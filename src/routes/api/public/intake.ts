@@ -7,17 +7,49 @@ const IntakeSchema = z.object({
   contact_channel: z.enum(["chat", "phone", "whatsapp"]).optional().nullable(),
   age_band: z.enum(["unknown", "teen_20s", "30s_40s", "50s_60s"]).optional().nullable(),
 
-  // New structured intake fields
+  // Structured intake fields
   full_name: z.string().trim().min(1).max(120).optional(),
   age_or_dob: z.string().trim().max(40).optional(),
   contact_value: z.string().trim().max(60).optional(),
   reason_for_visit: z.string().trim().min(1).max(200).optional(),
+  reason_category: z
+    .enum(["pregnancy", "gynae", "family_planning", "admin", "general"])
+    .optional(),
   details: z.string().trim().max(2000).optional(),
+
+  // Pregnancy / postpartum
   pregnancy_status: z
-    .enum(["unknown", "not_pregnant", "possibly", "pregnant"])
+    .enum(["unknown", "not_pregnant", "possibly", "pregnant", "postpartum"])
     .optional()
     .nullable(),
+  weeks_pregnant: z.string().trim().max(20).optional(),
+  weeks_postpartum: z.string().trim().max(20).optional(),
+  baby_movement_concern: z.boolean().optional(),
+  bleeding_or_severe_pain: z.boolean().optional(),
   last_menstrual_period: z.string().trim().max(40).optional(),
+
+  // Gynae
+  gynae_symptoms: z.array(z.string().max(60)).max(20).optional(),
+  symptom_duration: z.string().trim().max(60).optional(),
+  symptom_severity: z.enum(["mild", "moderate", "severe"]).optional(),
+
+  // Family planning
+  family_planning_topic: z
+    .enum(["start_contraception", "change_method", "side_effects", "post_delivery_advice"])
+    .optional(),
+
+  // Admin
+  admin_request_type: z
+    .enum([
+      "book_appointment",
+      "reschedule_appointment",
+      "cancel_appointment",
+      "clinic_hours",
+      "services",
+      "billing",
+    ])
+    .optional(),
+
   consent: z.boolean().optional(),
 });
 
@@ -102,10 +134,31 @@ export const Route = createFileRoute("/api/public/intake")({
         // Compose a structured user_message from the new fields, falling back
         // to the legacy single-message payload.
         const composedParts: string[] = [];
+        if (d.reason_category) composedParts.push(`Category: ${d.reason_category}`);
         if (d.reason_for_visit) composedParts.push(`Reason: ${d.reason_for_visit}`);
         if (d.details) composedParts.push(`Details: ${d.details}`);
-        if (d.pregnancy_status && d.pregnancy_status !== "unknown") {
-          composedParts.push(`Pregnancy status: ${d.pregnancy_status}`);
+
+        if (d.reason_category === "pregnancy") {
+          if (d.pregnancy_status && d.pregnancy_status !== "unknown")
+            composedParts.push(`Pregnancy status: ${d.pregnancy_status}`);
+          if (d.weeks_pregnant) composedParts.push(`Weeks pregnant: ${d.weeks_pregnant}`);
+          if (d.weeks_postpartum)
+            composedParts.push(`Weeks postpartum: ${d.weeks_postpartum}`);
+          if (d.baby_movement_concern) composedParts.push("Baby movement concern: yes");
+          if (d.bleeding_or_severe_pain)
+            composedParts.push("Bleeding or severe pain: yes");
+        }
+        if (d.reason_category === "gynae") {
+          if (d.gynae_symptoms?.length)
+            composedParts.push(`Symptoms: ${d.gynae_symptoms.join(", ")}`);
+          if (d.symptom_duration) composedParts.push(`Duration: ${d.symptom_duration}`);
+          if (d.symptom_severity) composedParts.push(`Severity: ${d.symptom_severity}`);
+        }
+        if (d.reason_category === "family_planning" && d.family_planning_topic) {
+          composedParts.push(`Family planning: ${d.family_planning_topic}`);
+        }
+        if (d.reason_category === "admin" && d.admin_request_type) {
+          composedParts.push(`Admin request: ${d.admin_request_type}`);
         }
         if (d.last_menstrual_period) {
           composedParts.push(`Last menstrual period: ${d.last_menstrual_period}`);
@@ -128,11 +181,20 @@ export const Route = createFileRoute("/api/public/intake")({
           );
         }
 
-        // Triage runs over the symptom/details text plus the reason
-        const triageText = [d.reason_for_visit, d.details, d.message]
-          .filter(Boolean)
-          .join(" ")
-          .trim() || message;
+        // Triage runs over the symptom/details text plus the reason and
+        // structured conditional signals.
+        const triageHints: string[] = [];
+        if (d.gynae_symptoms?.length) triageHints.push(d.gynae_symptoms.join(" "));
+        if (d.symptom_severity === "severe") triageHints.push("severe pain");
+        if (d.baby_movement_concern) triageHints.push("baby not moving");
+        if (d.bleeding_or_severe_pain) triageHints.push("heavy bleeding severe pain");
+        if (d.reason_category === "admin") triageHints.push("appointment");
+
+        const triageText =
+          [d.reason_for_visit, d.details, d.message, ...triageHints]
+            .filter(Boolean)
+            .join(" ")
+            .trim() || message;
 
         const t = triage(triageText);
 
