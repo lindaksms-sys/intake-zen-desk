@@ -37,13 +37,29 @@ const FILTERS: { key: FilterKey; label: string }[] = [
 ];
 
 async function fetchCases(): Promise<CaseLog[]> {
+  const url = (supabase as unknown as { supabaseUrl?: string }).supabaseUrl;
   const { data, error } = await supabase
     .from("agent_case_logs")
     .select("*")
     .order("created_at", { ascending: false })
     .limit(200);
-  if (error) throw error;
-  return (data ?? []) as CaseLog[];
+  if (error) {
+    console.error("[Clinic Intake] agent_case_logs fetch FAILED", {
+      supabaseUrl: url,
+      message: error.message,
+      details: error.details,
+      hint: error.hint,
+      code: error.code,
+    });
+    throw error;
+  }
+  const rows = (data ?? []) as CaseLog[];
+  if (import.meta.env.DEV) {
+    console.debug(
+      `[Clinic Intake] agent_case_logs fetch OK — ${rows.length} row(s) from ${url}`,
+    );
+  }
+  return rows;
 }
 
 function Dashboard() {
