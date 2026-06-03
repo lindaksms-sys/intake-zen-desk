@@ -6,6 +6,8 @@ import { Toaster } from "@/components/ui/sonner";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { supabase, type CaseLog } from "@/lib/supabase";
 import { SAMPLE_CASES } from "@/lib/sample-cases";
 import { normalizeUrgency, type UrgencyKey } from "@/lib/urgency";
@@ -47,6 +49,8 @@ function Dashboard() {
   const [filter, setFilter] = useState<FilterKey>("all");
   const [query, setQuery] = useState("");
   const [selectedId, setSelectedId] = useState<string | number | null>(null);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const isMobile = useIsMobile();
 
   const { data, isLoading, isError, refetch, isFetching } = useQuery({
     queryKey: ["agent_case_logs"],
@@ -68,10 +72,12 @@ function Dashboard() {
     });
   }, [allCases, filter, query]);
 
-  const selected =
-    filtered.find((c) => c.id === selectedId) ??
-    filtered[0] ??
-    null;
+  const selected = filtered.find((c) => c.id === selectedId) ?? null;
+
+  const handleSelect = (c: CaseLog) => {
+    setSelectedId(c.id ?? null);
+    if (isMobile) setMobileOpen(true);
+  };
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -170,16 +176,16 @@ function Dashboard() {
                   key={(c.id ?? c.session_id ?? idx) as React.Key}
                   caseLog={c}
                   selected={selected ? selected.id === c.id : false}
-                  onSelect={() => setSelectedId(c.id ?? null)}
+                  onSelect={() => handleSelect(c)}
                 />
               ))
             )}
           </section>
 
-          {/* Detail */}
+          {/* Detail — sticky on desktop; mobile uses Sheet below */}
           <section
             aria-label="Case detail"
-            className="rounded-lg border border-border bg-card min-h-[600px]"
+            className="hidden lg:block rounded-lg border border-border bg-card lg:sticky lg:top-6 lg:max-h-[calc(100vh-3rem)] lg:overflow-hidden"
           >
             {isLoading ? (
               <div className="space-y-4 p-6">
@@ -194,6 +200,13 @@ function Dashboard() {
           </section>
         </div>
       </main>
+
+      {/* Mobile detail drawer */}
+      <Sheet open={isMobile && mobileOpen} onOpenChange={setMobileOpen}>
+        <SheetContent side="right" className="w-full sm:max-w-lg p-0 overflow-y-auto">
+          <CaseDetail caseLog={selected} />
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
