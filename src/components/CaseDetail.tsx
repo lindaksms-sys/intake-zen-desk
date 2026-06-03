@@ -235,9 +235,17 @@ export function CaseDetail({ caseLog, onMarkReviewed, isMarking }: Props) {
           </blockquote>
         </section>
 
-        <div className="flex items-center gap-1.5 pt-2 text-xs text-muted-foreground border-t border-border">
-          <Clock className="h-3 w-3" />
-          Logged {fmtTime(caseLog.created_at)}
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 pt-2 text-xs text-muted-foreground border-t border-border">
+          <span className="flex items-center gap-1.5">
+            <Clock className="h-3 w-3" />
+            Logged {fmtTime(caseLog.created_at)}
+          </span>
+          {caseLog.reviewed_at && (
+            <span className="flex items-center gap-1.5">
+              <CheckCircle2 className="h-3 w-3 text-routine" />
+              Reviewed {fmtTime(caseLog.reviewed_at)}
+            </span>
+          )}
         </div>
       </div>
     </div>
