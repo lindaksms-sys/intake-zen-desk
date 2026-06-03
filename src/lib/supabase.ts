@@ -26,4 +26,6 @@ export interface CaseLog {
   reviewed_at?: string | null;
   closed_at?: string | null;
   updated_at?: string | null;
+  assigned_to_queue?: string | null;
+  assigned_at?: string | null;
 }
