@@ -310,7 +310,8 @@ function Dashboard() {
             </div>
           </div>
 
-          <div className="mt-5">
+          <div className="mt-5 space-y-3">
+            <OpsMetrics cases={allCases} />
             <StatsCards cases={allCases} />
           </div>
 
