@@ -99,12 +99,13 @@ function Dashboard() {
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return allCases.filter((c) => {
+      if (kpiFilter && !matchesKpi(c, kpiFilter)) return false;
       if (filter !== "all" && normalizeUrgency(c.urgency_level) !== filter) return false;
       if (!q) return true;
       return [c.user_message, c.staff_summary, c.reason_for_visit]
         .some((f) => (f ?? "").toLowerCase().includes(q));
     });
-  }, [allCases, filter, query]);
+  }, [allCases, filter, kpiFilter, query]);
 
   const selected = filtered.find((c) => c.id === selectedId) ?? null;
 
@@ -112,6 +113,26 @@ function Dashboard() {
     setSelectedId(c.id ?? null);
     if (isMobile) setMobileOpen(true);
   };
+
+  const handleKpiSelect = (key: KpiFilterKey) => {
+    setKpiFilter((prev) => (prev === key ? null : key));
+    setFilter("all");
+  };
+
+  const handleStatsSelect = (key: KpiFilterKey | "total") => {
+    if (key === "total") {
+      setKpiFilter(null);
+      setFilter("all");
+      return;
+    }
+    handleKpiSelect(key);
+  };
+
+  const handleTabSelect = (key: FilterKey) => {
+    setFilter(key);
+    setKpiFilter(null);
+  };
+
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
