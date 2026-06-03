@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { supabase } from "@/integrations/supabase/client";
+
 
 const IntakeSchema = z.object({
   // Legacy single-message support
@@ -207,7 +208,7 @@ export const Route = createFileRoute("/api/public/intake")({
         const namePrefix = d.full_name ? `${d.full_name} — ` : "";
         const staff_summary = `[${t.urgency_level}] ${namePrefix}${human_readable_summary}`;
 
-        const { data, error } = await supabaseAdmin
+        const { data, error } = await supabase
           .from("agent_case_logs")
           .insert({
             session_id,
