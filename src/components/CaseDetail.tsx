@@ -251,6 +251,12 @@ export function CaseDetail({ caseLog, onMarkReviewed, isMarking, onCloseCase, is
               Reviewed {fmtTime(caseLog.reviewed_at)}
             </span>
           )}
+          {caseLog.closed_at && (
+            <span className="flex items-center gap-1.5">
+              <XCircle className="h-3 w-3 text-muted-foreground" />
+              Closed {fmtTime(caseLog.closed_at)}
+            </span>
+          )}
         </div>
       </div>
     </div>
