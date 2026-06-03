@@ -1,23 +1,29 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { toast } from "sonner";
-import { Search, Activity, RefreshCw, LogOut } from "lucide-react";
+import { Search, Activity, RefreshCw, LogOut, X } from "lucide-react";
 import { Toaster } from "@/components/ui/sonner";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Sheet, SheetContent } from "@/components/ui/sheet";
-import { useIsMobile } from "@/hooks/use-mobile";
 import { supabase, type CaseLog } from "@/lib/supabase";
 import { SAMPLE_CASES } from "@/lib/sample-cases";
 import { normalizeUrgency, type UrgencyKey } from "@/lib/urgency";
 import { StatsCards } from "@/components/StatsCards";
 import { OpsMetrics } from "@/components/OpsMetrics";
 import { CaseListItem } from "@/components/CaseListItem";
-import { CaseDetail } from "@/components/CaseDetail";
 import { KPI_LABEL, matchesKpi, type KpiFilterKey } from "@/lib/kpi-filters";
-import { X } from "lucide-react";
+
+type FilterKey = "all" | UrgencyKey;
+
+type DashboardSearch = {
+  q?: string;
+  filter?: FilterKey;
+  kpi?: KpiFilterKey;
+};
+
+const ALLOWED_FILTERS: FilterKey[] = ["all", "emergency", "urgent", "routine", "admin"];
+const ALLOWED_KPIS: KpiFilterKey[] = Object.keys(KPI_LABEL) as KpiFilterKey[];
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
@@ -26,10 +32,17 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
       { name: "description", content: "AI-triaged incoming patient cases for clinic staff review." },
     ],
   }),
+  validateSearch: (raw: Record<string, unknown>): DashboardSearch => {
+    const out: DashboardSearch = {};
+    if (typeof raw.q === "string" && raw.q) out.q = raw.q;
+    if (typeof raw.filter === "string" && (ALLOWED_FILTERS as string[]).includes(raw.filter))
+      out.filter = raw.filter as FilterKey;
+    if (typeof raw.kpi === "string" && (ALLOWED_KPIS as string[]).includes(raw.kpi))
+      out.kpi = raw.kpi as KpiFilterKey;
+    return out;
+  },
   component: Dashboard,
 });
-
-type FilterKey = "all" | UrgencyKey;
 
 const FILTERS: { key: FilterKey; label: string }[] = [
   { key: "all", label: "All" },
@@ -40,43 +53,37 @@ const FILTERS: { key: FilterKey; label: string }[] = [
 ];
 
 async function fetchCases(): Promise<CaseLog[]> {
-  const url = (supabase as unknown as { supabaseUrl?: string }).supabaseUrl;
   const { data, error } = await supabase
     .from("agent_case_logs")
     .select("*")
     .order("created_at", { ascending: false })
     .limit(200);
-  if (error) {
-    console.error("[Clinic Intake] agent_case_logs fetch FAILED", {
-      supabaseUrl: url,
-      message: error.message,
-      details: error.details,
-      hint: error.hint,
-      code: error.code,
-    });
-    throw error;
-  }
-  const rows = (data ?? []) as CaseLog[];
-  if (import.meta.env.DEV) {
-    console.debug(
-      `[Clinic Intake] agent_case_logs fetch OK — ${rows.length} row(s) from ${url}`,
-    );
-  }
-  return rows;
+  if (error) throw error;
+  return (data ?? []) as CaseLog[];
 }
 
 function Dashboard() {
-  const navigate = useNavigate();
-  const [filter, setFilter] = useState<FilterKey>("all");
-  const [kpiFilter, setKpiFilter] = useState<KpiFilterKey | null>(null);
-  const [query, setQuery] = useState("");
-  const [selectedId, setSelectedId] = useState<string | number | null>(null);
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const [sampleOverrides, setSampleOverrides] = useState<
-    Record<string, Partial<CaseLog>>
-  >({});
-  const isMobile = useIsMobile();
+  const navigate = useNavigate({ from: "/dashboard" });
+  const search = Route.useSearch();
+  const filter: FilterKey = search.filter ?? "all";
+  const kpiFilter: KpiFilterKey | null = search.kpi ?? null;
+  const query = search.q ?? "";
+
+  const [queryDraft, setQueryDraft] = useState(query);
   const queryClient = useQueryClient();
+
+  const updateSearch = (patch: Partial<DashboardSearch>) => {
+    navigate({
+      search: (prev: DashboardSearch) => {
+        const next: DashboardSearch = { ...prev, ...patch };
+        if (!next.q) delete next.q;
+        if (!next.filter || next.filter === "all") delete next.filter;
+        if (!next.kpi) delete next.kpi;
+        return next;
+      },
+      replace: true,
+    });
+  };
 
   const { data, isLoading, isError, refetch, isFetching } = useQuery({
     queryKey: ["agent_case_logs"],
@@ -86,15 +93,7 @@ function Dashboard() {
 
   const liveCases = data ?? [];
   const usingSample = !isLoading && !isError && liveCases.length === 0;
-  const baseCases = liveCases.length > 0 ? liveCases : SAMPLE_CASES;
-  const allCases = useMemo(
-    () =>
-      baseCases.map((c) => {
-        const o = sampleOverrides[String(c.id)];
-        return o ? { ...c, ...o } : c;
-      }),
-    [baseCases, sampleOverrides],
-  );
+  const allCases = liveCases.length > 0 ? liveCases : SAMPLE_CASES;
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -107,32 +106,27 @@ function Dashboard() {
     });
   }, [allCases, filter, kpiFilter, query]);
 
-  const selected = filtered.find((c) => c.id === selectedId) ?? null;
-
   const handleSelect = (c: CaseLog) => {
-    setSelectedId(c.id ?? null);
-    if (isMobile) setMobileOpen(true);
+    if (c.id == null) return;
+    navigate({ to: "/dashboard/cases/$id", params: { id: String(c.id) } });
   };
 
   const handleKpiSelect = (key: KpiFilterKey) => {
-    setKpiFilter((prev) => (prev === key ? null : key));
-    setFilter("all");
+    const next = kpiFilter === key ? undefined : key;
+    updateSearch({ kpi: next, filter: undefined });
   };
 
   const handleStatsSelect = (key: KpiFilterKey | "total") => {
     if (key === "total") {
-      setKpiFilter(null);
-      setFilter("all");
+      updateSearch({ kpi: undefined, filter: undefined });
       return;
     }
     handleKpiSelect(key);
   };
 
   const handleTabSelect = (key: FilterKey) => {
-    setFilter(key);
-    setKpiFilter(null);
+    updateSearch({ filter: key, kpi: undefined });
   };
-
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -140,146 +134,9 @@ function Dashboard() {
     navigate({ to: "/auth", replace: true });
   };
 
-  const markReviewed = useMutation({
-    mutationFn: async (c: CaseLog) => {
-      const reviewed_at = new Date().toISOString();
-      if (usingSample) {
-        return { ...c, case_status: "reviewed", reviewed_at } as CaseLog;
-      }
-      const { data, error } = await supabase
-        .from("agent_case_logs")
-        .update({ case_status: "reviewed", reviewed_at })
-        .eq("id", c.id as never)
-        .select()
-        .single();
-      if (error) {
-        console.error("[Clinic Intake] mark reviewed FAILED", {
-          id: c.id,
-          message: error.message,
-          code: error.code,
-          hint: error.hint,
-        });
-        throw error;
-      }
-      return data as CaseLog;
-    },
-    onSuccess: (updated) => {
-      toast.success("Case marked as reviewed");
-      if (usingSample) {
-        setSampleOverrides((prev) => ({
-          ...prev,
-          [String(updated.id)]: {
-            case_status: updated.case_status,
-            reviewed_at: updated.reviewed_at,
-          },
-        }));
-      } else {
-        queryClient.invalidateQueries({ queryKey: ["agent_case_logs"] });
-      }
-    },
-    onError: (err: unknown) => {
-      const msg = err instanceof Error ? err.message : "Update failed";
-      toast.error("Couldn't mark as reviewed", { description: msg });
-    },
-  });
-
-  const closeCase = useMutation({
-    mutationFn: async (c: CaseLog) => {
-      const closed_at = new Date().toISOString();
-      if (usingSample) {
-        return { ...c, case_status: "closed", closed_at } as CaseLog;
-      }
-      const { data, error } = await supabase
-        .from("agent_case_logs")
-        .update({ case_status: "closed", closed_at })
-        .eq("id", c.id as never)
-        .select()
-        .single();
-      if (error) {
-        console.error("[Clinic Intake] close case FAILED", {
-          id: c.id,
-          message: error.message,
-          code: error.code,
-          hint: error.hint,
-        });
-        throw error;
-      }
-      return data as CaseLog;
-    },
-    onSuccess: (updated) => {
-      toast.success("Case closed");
-      if (usingSample) {
-        setSampleOverrides((prev) => ({
-          ...prev,
-          [String(updated.id)]: {
-            ...(prev[String(updated.id)] ?? {}),
-            case_status: updated.case_status,
-            closed_at: updated.closed_at,
-          },
-        }));
-      } else {
-        queryClient.invalidateQueries({ queryKey: ["agent_case_logs"] });
-      }
-    },
-    onError: (err: unknown) => {
-      const msg = err instanceof Error ? err.message : "Update failed";
-      toast.error("Couldn't close case", { description: msg });
-    },
-  });
-
-  const assignCase = useMutation({
-    mutationFn: async ({ c, queue }: { c: CaseLog; queue: "nurse_review" | "front_desk" }) => {
-      const assigned_at = new Date().toISOString();
-      if (usingSample) {
-        return { ...c, assigned_to_queue: queue, assigned_at } as CaseLog;
-      }
-      const { data, error } = await supabase
-        .from("agent_case_logs")
-        .update({ assigned_to_queue: queue, assigned_at })
-        .eq("id", c.id as never)
-        .select()
-        .single();
-      if (error) {
-        console.error("[Clinic Intake] assign case FAILED", {
-          id: c.id,
-          queue,
-          message: error.message,
-          code: error.code,
-          hint: error.hint,
-        });
-        throw error;
-      }
-      return data as CaseLog;
-    },
-    onSuccess: (updated) => {
-      const label =
-        updated.assigned_to_queue === "nurse_review"
-          ? "Assigned to nurse"
-          : "Assigned to front desk";
-      toast.success(label);
-      if (usingSample) {
-        setSampleOverrides((prev) => ({
-          ...prev,
-          [String(updated.id)]: {
-            ...(prev[String(updated.id)] ?? {}),
-            assigned_to_queue: updated.assigned_to_queue,
-            assigned_at: updated.assigned_at,
-          },
-        }));
-      } else {
-        queryClient.invalidateQueries({ queryKey: ["agent_case_logs"] });
-      }
-    },
-    onError: (err: unknown) => {
-      const msg = err instanceof Error ? err.message : "Update failed";
-      toast.error("Couldn't assign case", { description: msg });
-    },
-  });
-
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Toaster position="top-right" />
-      {/* Top bar */}
       <header className="sticky top-0 z-10 border-b border-border bg-background/85 backdrop-blur">
         <div className="mx-auto max-w-[1400px] px-6 py-4">
           <div className="flex flex-wrap items-end justify-between gap-4">
@@ -298,33 +155,19 @@ function Dashboard() {
                   Showing sample data
                 </span>
               )}
-              {import.meta.env.DEV && !isLoading && (
-                <span
-                  className={`rounded-full border px-2.5 py-1 text-[11px] font-mono ${
-                    isError
-                      ? "border-emergency/30 bg-emergency-soft text-emergency"
-                      : "border-border bg-muted text-muted-foreground"
-                  }`}
-                  title={isError ? "Supabase fetch failed" : "Supabase fetch OK"}
-                >
-                  {isError ? "fetch: error" : `fetch: ${liveCases.length} row(s)`}
-                </span>
-              )}
               <div className="relative">
                 <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
                 <Input
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
+                  value={queryDraft}
+                  onChange={(e) => {
+                    setQueryDraft(e.target.value);
+                    updateSearch({ q: e.target.value });
+                  }}
                   placeholder="Search messages, reasons…"
                   className="h-9 w-64 pl-8 bg-card"
                 />
               </div>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => refetch()}
-                disabled={isFetching}
-              >
+              <Button size="sm" variant="outline" onClick={() => refetch()} disabled={isFetching}>
                 <RefreshCw className={`h-4 w-4 ${isFetching ? "animate-spin" : ""}`} />
                 Refresh
               </Button>
@@ -347,117 +190,65 @@ function Dashboard() {
                   key={f.key}
                   onClick={() => handleTabSelect(f.key)}
                   className={`relative px-3 py-2 text-sm transition-colors
-                    ${active
-                      ? "font-semibold text-foreground"
-                      : "font-medium text-muted-foreground/80 hover:text-foreground"}
-                  `}
+                    ${active ? "font-semibold text-foreground" : "font-medium text-muted-foreground/80 hover:text-foreground"}`}
                 >
                   {f.label}
-                  {active && (
-                    <span className="absolute inset-x-2 -bottom-px h-[2px] rounded-full bg-foreground" />
-                  )}
+                  {active && <span className="absolute inset-x-2 -bottom-px h-[2px] rounded-full bg-foreground" />}
                 </button>
               );
             })}
           </div>
-
         </div>
       </header>
 
-      {/* Workspace */}
-      <main className="mx-auto max-w-[1400px] px-6 py-6">
+      <main className="mx-auto max-w-[1100px] px-6 py-6">
         {isError && (
           <div className="mb-4 rounded-lg border border-emergency/20 bg-emergency-soft px-4 py-3 text-sm text-emergency">
             Couldn't reach Supabase. Showing sample data so you can preview the UI.
           </div>
         )}
 
-        <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(340px,420px)_1fr]">
-          {/* Case list */}
-          <section aria-label="Case list" className="space-y-2">
-            {kpiFilter && (
-              <div className="flex items-center justify-between rounded-md border border-border/70 bg-foreground/[0.03] px-3 py-1.5">
-                <span className="text-xs text-muted-foreground">
-                  Filtered by:{" "}
-                  <span className="font-medium text-foreground">{KPI_LABEL[kpiFilter]}</span>
-                  <span className="ml-1.5 tabular-nums text-muted-foreground/80">
-                    ({filtered.length})
-                  </span>
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setKpiFilter(null)}
-                  className="inline-flex items-center gap-1 rounded text-xs text-muted-foreground hover:text-foreground cursor-pointer"
-                >
-                  <X className="h-3 w-3" />
-                  Clear
-                </button>
-              </div>
-            )}
-            {isLoading ? (
-              Array.from({ length: 5 }).map((_, i) => (
-                <Skeleton key={i} className="h-[92px] w-full rounded-lg" />
-              ))
-            ) : filtered.length === 0 ? (
-              <div className="rounded-lg border border-dashed border-border bg-card px-6 py-16 text-center">
-                <p className="text-sm font-medium text-foreground">No cases found</p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Try changing the filter or clearing your search.
-                </p>
-              </div>
-            ) : (
-              filtered.map((c, idx) => (
-                <CaseListItem
-                  key={(c.id ?? c.session_id ?? idx) as React.Key}
-                  caseLog={c}
-                  selected={selected ? selected.id === c.id : false}
-                  onSelect={() => handleSelect(c)}
-                />
-              ))
-            )}
-          </section>
-
-          {/* Detail — sticky on desktop; mobile uses Sheet below */}
-          <section
-            aria-label="Case detail"
-            className="hidden lg:block rounded-lg border border-border bg-card lg:sticky lg:top-6 lg:max-h-[calc(100vh-3rem)] lg:overflow-hidden"
-          >
-            {isLoading ? (
-              <div className="space-y-4 p-6">
-                <Skeleton className="h-6 w-40" />
-                <Skeleton className="h-4 w-3/4" />
-                <Skeleton className="h-32 w-full" />
-                <Skeleton className="h-24 w-full" />
-              </div>
-            ) : (
-              <CaseDetail
-                caseLog={selected}
-                onMarkReviewed={(c) => markReviewed.mutate(c)}
-                isMarking={markReviewed.isPending}
-                onCloseCase={(c) => closeCase.mutate(c)}
-                isClosing={closeCase.isPending}
-                onAssign={(c, queue) => assignCase.mutate({ c, queue })}
-                isAssigning={assignCase.isPending}
+        <section aria-label="Case list" className="space-y-2">
+          {kpiFilter && (
+            <div className="flex items-center justify-between rounded-md border border-border/70 bg-foreground/[0.03] px-3 py-1.5">
+              <span className="text-xs text-muted-foreground">
+                Filtered by:{" "}
+                <span className="font-medium text-foreground">{KPI_LABEL[kpiFilter]}</span>
+                <span className="ml-1.5 tabular-nums text-muted-foreground/80">({filtered.length})</span>
+              </span>
+              <button
+                type="button"
+                onClick={() => updateSearch({ kpi: undefined })}
+                className="inline-flex items-center gap-1 rounded text-xs text-muted-foreground hover:text-foreground cursor-pointer"
+              >
+                <X className="h-3 w-3" />
+                Clear
+              </button>
+            </div>
+          )}
+          {isLoading ? (
+            Array.from({ length: 6 }).map((_, i) => (
+              <Skeleton key={i} className="h-[92px] w-full rounded-lg" />
+            ))
+          ) : filtered.length === 0 ? (
+            <div className="rounded-lg border border-dashed border-border bg-card px-6 py-16 text-center">
+              <p className="text-sm font-medium text-foreground">No cases found</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Try changing the filter or clearing your search.
+              </p>
+            </div>
+          ) : (
+            filtered.map((c, idx) => (
+              <CaseListItem
+                key={(c.id ?? c.session_id ?? idx) as React.Key}
+                caseLog={c}
+                selected={false}
+                onSelect={() => handleSelect(c)}
               />
-            )}
-          </section>
-        </div>
+            ))
+          )}
+        </section>
       </main>
-
-      {/* Mobile detail drawer */}
-      <Sheet open={isMobile && mobileOpen} onOpenChange={setMobileOpen}>
-        <SheetContent side="right" className="w-full sm:max-w-lg p-0 overflow-y-auto">
-          <CaseDetail
-            caseLog={selected}
-            onMarkReviewed={(c) => markReviewed.mutate(c)}
-            isMarking={markReviewed.isPending}
-            onCloseCase={(c) => closeCase.mutate(c)}
-            isClosing={closeCase.isPending}
-            onAssign={(c, queue) => assignCase.mutate({ c, queue })}
-            isAssigning={assignCase.isPending}
-          />
-        </SheetContent>
-      </Sheet>
     </div>
   );
 }
