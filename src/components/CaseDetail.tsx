@@ -98,7 +98,9 @@ export function CaseDetail({ caseLog, onMarkReviewed, isMarking, onCloseCase, is
 
   const flags = redFlagsList(caseLog.red_flags);
   const status = (caseLog.case_status ?? "new").toLowerCase();
-  const reviewedDisabled = status === "reviewed" || status === "closed" || !!isMarking;
+  const isClosed = status === "closed";
+  const reviewedDisabled = status === "reviewed" || isClosed || !!isMarking;
+  const closeDisabled = isClosed || !!isClosing;
   const act = (label: string) =>
     toast.success(label, { description: `Case ${caseLog.session_id ?? caseLog.id}` });
 
