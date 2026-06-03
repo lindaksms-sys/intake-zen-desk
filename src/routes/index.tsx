@@ -243,7 +243,11 @@ function Dashboard() {
                 <Skeleton className="h-24 w-full" />
               </div>
             ) : (
-              <CaseDetail caseLog={selected} />
+              <CaseDetail
+                caseLog={selected}
+                onMarkReviewed={(c) => markReviewed.mutate(c)}
+                isMarking={markReviewed.isPending}
+              />
             )}
           </section>
         </div>
