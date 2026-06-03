@@ -6,6 +6,8 @@ import { Toaster } from "@/components/ui/sonner";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { supabase, type CaseLog } from "@/lib/supabase";
 import { SAMPLE_CASES } from "@/lib/sample-cases";
 import { normalizeUrgency, type UrgencyKey } from "@/lib/urgency";
