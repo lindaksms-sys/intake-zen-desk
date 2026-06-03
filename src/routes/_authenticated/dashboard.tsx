@@ -352,6 +352,8 @@ function Dashboard() {
             caseLog={selected}
             onMarkReviewed={(c) => markReviewed.mutate(c)}
             isMarking={markReviewed.isPending}
+            onCloseCase={(c) => closeCase.mutate(c)}
+            isClosing={closeCase.isPending}
           />
         </SheetContent>
       </Sheet>
