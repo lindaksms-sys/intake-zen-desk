@@ -29,4 +29,7 @@ export interface CaseLog {
   patient_message: string | null;
   human_readable_summary: string | null;
   created_at: string;
+  reviewed_at?: string | null;
+  closed_at?: string | null;
+  updated_at?: string | null;
 }

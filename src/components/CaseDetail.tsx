@@ -18,6 +18,8 @@ import type { CaseLog } from "@/lib/supabase";
 
 interface Props {
   caseLog: CaseLog | null;
+  onMarkReviewed?: (c: CaseLog) => void;
+  isMarking?: boolean;
 }
 
 function fmtTime(iso: string) {
@@ -79,7 +81,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
-export function CaseDetail({ caseLog }: Props) {
+export function CaseDetail({ caseLog, onMarkReviewed, isMarking }: Props) {
   if (!caseLog) {
     return (
       <div className="flex h-full flex-col items-center justify-center text-center px-6 py-20">
@@ -93,6 +95,8 @@ export function CaseDetail({ caseLog }: Props) {
   }
 
   const flags = redFlagsList(caseLog.red_flags);
+  const status = (caseLog.case_status ?? "new").toLowerCase();
+  const reviewedDisabled = status === "reviewed" || status === "closed" || !!isMarking;
   const act = (label: string) =>
     toast.success(label, { description: `Case ${caseLog.session_id ?? caseLog.id}` });
 
@@ -151,8 +155,13 @@ export function CaseDetail({ caseLog }: Props) {
       <div className="border-b border-border px-6 py-3">
         <div className="flex flex-wrap items-center gap-2">
           <div className="inline-flex flex-wrap items-center gap-1.5 rounded-lg border border-border bg-card p-1">
-            <Button size="sm" onClick={() => act("Marked as reviewed")}>
-              <CheckCircle2 className="h-4 w-4" /> Mark reviewed
+            <Button
+              size="sm"
+              disabled={reviewedDisabled}
+              onClick={() => onMarkReviewed?.(caseLog)}
+            >
+              <CheckCircle2 className="h-4 w-4" />
+              {status === "reviewed" ? "Reviewed" : "Mark reviewed"}
             </Button>
             <Button size="sm" variant="ghost" onClick={() => act("Assigned to nurse")}>
               <UserPlus className="h-4 w-4" /> Nurse
@@ -226,9 +235,17 @@ export function CaseDetail({ caseLog }: Props) {
           </blockquote>
         </section>
 
-        <div className="flex items-center gap-1.5 pt-2 text-xs text-muted-foreground border-t border-border">
-          <Clock className="h-3 w-3" />
-          Logged {fmtTime(caseLog.created_at)}
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 pt-2 text-xs text-muted-foreground border-t border-border">
+          <span className="flex items-center gap-1.5">
+            <Clock className="h-3 w-3" />
+            Logged {fmtTime(caseLog.created_at)}
+          </span>
+          {caseLog.reviewed_at && (
+            <span className="flex items-center gap-1.5">
+              <CheckCircle2 className="h-3 w-3 text-routine" />
+              Reviewed {fmtTime(caseLog.reviewed_at)}
+            </span>
+          )}
         </div>
       </div>
     </div>
