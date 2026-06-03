@@ -49,6 +49,8 @@ function Dashboard() {
   const [filter, setFilter] = useState<FilterKey>("all");
   const [query, setQuery] = useState("");
   const [selectedId, setSelectedId] = useState<string | number | null>(null);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const isMobile = useIsMobile();
 
   const { data, isLoading, isError, refetch, isFetching } = useQuery({
     queryKey: ["agent_case_logs"],
@@ -70,10 +72,12 @@ function Dashboard() {
     });
   }, [allCases, filter, query]);
 
-  const selected =
-    filtered.find((c) => c.id === selectedId) ??
-    filtered[0] ??
-    null;
+  const selected = filtered.find((c) => c.id === selectedId) ?? null;
+
+  const handleSelect = (c: CaseLog) => {
+    setSelectedId(c.id ?? null);
+    if (isMobile) setMobileOpen(true);
+  };
 
   return (
     <div className="min-h-screen bg-background text-foreground">
