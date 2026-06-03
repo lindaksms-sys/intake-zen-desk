@@ -202,6 +202,55 @@ function Dashboard() {
     },
   });
 
+  const assignCase = useMutation({
+    mutationFn: async ({ c, queue }: { c: CaseLog; queue: "nurse_review" | "front_desk" }) => {
+      const assigned_at = new Date().toISOString();
+      if (usingSample) {
+        return { ...c, assigned_to_queue: queue, assigned_at } as CaseLog;
+      }
+      const { data, error } = await supabase
+        .from("agent_case_logs")
+        .update({ assigned_to_queue: queue, assigned_at })
+        .eq("id", c.id as never)
+        .select()
+        .single();
+      if (error) {
+        console.error("[Clinic Intake] assign case FAILED", {
+          id: c.id,
+          queue,
+          message: error.message,
+          code: error.code,
+          hint: error.hint,
+        });
+        throw error;
+      }
+      return data as CaseLog;
+    },
+    onSuccess: (updated) => {
+      const label =
+        updated.assigned_to_queue === "nurse_review"
+          ? "Assigned to nurse"
+          : "Assigned to front desk";
+      toast.success(label);
+      if (usingSample) {
+        setSampleOverrides((prev) => ({
+          ...prev,
+          [String(updated.id)]: {
+            ...(prev[String(updated.id)] ?? {}),
+            assigned_to_queue: updated.assigned_to_queue,
+            assigned_at: updated.assigned_at,
+          },
+        }));
+      } else {
+        queryClient.invalidateQueries({ queryKey: ["agent_case_logs"] });
+      }
+    },
+    onError: (err: unknown) => {
+      const msg = err instanceof Error ? err.message : "Update failed";
+      toast.error("Couldn't assign case", { description: msg });
+    },
+  });
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Toaster position="top-right" />
