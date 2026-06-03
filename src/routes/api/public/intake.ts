@@ -134,10 +134,31 @@ export const Route = createFileRoute("/api/public/intake")({
         // Compose a structured user_message from the new fields, falling back
         // to the legacy single-message payload.
         const composedParts: string[] = [];
+        if (d.reason_category) composedParts.push(`Category: ${d.reason_category}`);
         if (d.reason_for_visit) composedParts.push(`Reason: ${d.reason_for_visit}`);
         if (d.details) composedParts.push(`Details: ${d.details}`);
-        if (d.pregnancy_status && d.pregnancy_status !== "unknown") {
-          composedParts.push(`Pregnancy status: ${d.pregnancy_status}`);
+
+        if (d.reason_category === "pregnancy") {
+          if (d.pregnancy_status && d.pregnancy_status !== "unknown")
+            composedParts.push(`Pregnancy status: ${d.pregnancy_status}`);
+          if (d.weeks_pregnant) composedParts.push(`Weeks pregnant: ${d.weeks_pregnant}`);
+          if (d.weeks_postpartum)
+            composedParts.push(`Weeks postpartum: ${d.weeks_postpartum}`);
+          if (d.baby_movement_concern) composedParts.push("Baby movement concern: yes");
+          if (d.bleeding_or_severe_pain)
+            composedParts.push("Bleeding or severe pain: yes");
+        }
+        if (d.reason_category === "gynae") {
+          if (d.gynae_symptoms?.length)
+            composedParts.push(`Symptoms: ${d.gynae_symptoms.join(", ")}`);
+          if (d.symptom_duration) composedParts.push(`Duration: ${d.symptom_duration}`);
+          if (d.symptom_severity) composedParts.push(`Severity: ${d.symptom_severity}`);
+        }
+        if (d.reason_category === "family_planning" && d.family_planning_topic) {
+          composedParts.push(`Family planning: ${d.family_planning_topic}`);
+        }
+        if (d.reason_category === "admin" && d.admin_request_type) {
+          composedParts.push(`Admin request: ${d.admin_request_type}`);
         }
         if (d.last_menstrual_period) {
           composedParts.push(`Last menstrual period: ${d.last_menstrual_period}`);
