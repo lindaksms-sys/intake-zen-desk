@@ -74,7 +74,7 @@ function Dashboard() {
 
   const updateSearch = (patch: Partial<DashboardSearch>) => {
     navigate({
-      search: (prev) => {
+      search: (prev: DashboardSearch) => {
         const next: DashboardSearch = { ...prev, ...patch };
         if (!next.q) delete next.q;
         if (!next.filter || next.filter === "all") delete next.filter;
