@@ -20,6 +20,8 @@ interface Props {
   caseLog: CaseLog | null;
   onMarkReviewed?: (c: CaseLog) => void;
   isMarking?: boolean;
+  onCloseCase?: (c: CaseLog) => void;
+  isClosing?: boolean;
 }
 
 function fmtTime(iso: string) {
@@ -81,7 +83,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
-export function CaseDetail({ caseLog, onMarkReviewed, isMarking }: Props) {
+export function CaseDetail({ caseLog, onMarkReviewed, isMarking, onCloseCase, isClosing }: Props) {
   if (!caseLog) {
     return (
       <div className="flex h-full flex-col items-center justify-center text-center px-6 py-20">
@@ -96,7 +98,9 @@ export function CaseDetail({ caseLog, onMarkReviewed, isMarking }: Props) {
 
   const flags = redFlagsList(caseLog.red_flags);
   const status = (caseLog.case_status ?? "new").toLowerCase();
-  const reviewedDisabled = status === "reviewed" || status === "closed" || !!isMarking;
+  const isClosed = status === "closed";
+  const reviewedDisabled = status === "reviewed" || isClosed || !!isMarking;
+  const closeDisabled = isClosed || !!isClosing;
   const act = (label: string) =>
     toast.success(label, { description: `Case ${caseLog.session_id ?? caseLog.id}` });
 
@@ -177,9 +181,10 @@ export function CaseDetail({ caseLog, onMarkReviewed, isMarking }: Props) {
             size="sm"
             variant="ghost"
             className="ml-auto text-muted-foreground"
-            onClick={() => act("Case closed")}
+            disabled={closeDisabled}
+            onClick={() => onCloseCase?.(caseLog)}
           >
-            <XCircle className="h-4 w-4" /> Close case
+            <XCircle className="h-4 w-4" /> {isClosed ? "Closed" : "Close case"}
           </Button>
         </div>
       </div>
@@ -244,6 +249,12 @@ export function CaseDetail({ caseLog, onMarkReviewed, isMarking }: Props) {
             <span className="flex items-center gap-1.5">
               <CheckCircle2 className="h-3 w-3 text-routine" />
               Reviewed {fmtTime(caseLog.reviewed_at)}
+            </span>
+          )}
+          {caseLog.closed_at && (
+            <span className="flex items-center gap-1.5">
+              <XCircle className="h-3 w-3 text-muted-foreground" />
+              Closed {fmtTime(caseLog.closed_at)}
             </span>
           )}
         </div>

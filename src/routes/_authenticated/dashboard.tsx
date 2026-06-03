@@ -158,6 +158,50 @@ function Dashboard() {
     },
   });
 
+  const closeCase = useMutation({
+    mutationFn: async (c: CaseLog) => {
+      const closed_at = new Date().toISOString();
+      if (usingSample) {
+        return { ...c, case_status: "closed", closed_at } as CaseLog;
+      }
+      const { data, error } = await supabase
+        .from("agent_case_logs")
+        .update({ case_status: "closed", closed_at })
+        .eq("id", c.id as never)
+        .select()
+        .single();
+      if (error) {
+        console.error("[Clinic Intake] close case FAILED", {
+          id: c.id,
+          message: error.message,
+          code: error.code,
+          hint: error.hint,
+        });
+        throw error;
+      }
+      return data as CaseLog;
+    },
+    onSuccess: (updated) => {
+      toast.success("Case closed");
+      if (usingSample) {
+        setSampleOverrides((prev) => ({
+          ...prev,
+          [String(updated.id)]: {
+            ...(prev[String(updated.id)] ?? {}),
+            case_status: updated.case_status,
+            closed_at: updated.closed_at,
+          },
+        }));
+      } else {
+        queryClient.invalidateQueries({ queryKey: ["agent_case_logs"] });
+      }
+    },
+    onError: (err: unknown) => {
+      const msg = err instanceof Error ? err.message : "Update failed";
+      toast.error("Couldn't close case", { description: msg });
+    },
+  });
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Toaster position="top-right" />
@@ -293,6 +337,8 @@ function Dashboard() {
                 caseLog={selected}
                 onMarkReviewed={(c) => markReviewed.mutate(c)}
                 isMarking={markReviewed.isPending}
+                onCloseCase={(c) => closeCase.mutate(c)}
+                isClosing={closeCase.isPending}
               />
             )}
           </section>
@@ -306,6 +352,8 @@ function Dashboard() {
             caseLog={selected}
             onMarkReviewed={(c) => markReviewed.mutate(c)}
             isMarking={markReviewed.isPending}
+            onCloseCase={(c) => closeCase.mutate(c)}
+            isClosing={closeCase.isPending}
           />
         </SheetContent>
       </Sheet>
