@@ -103,21 +103,39 @@ function statusTone(s: string | null | undefined): string {
   return "border-foreground/15 bg-card text-foreground";
 }
 
-function SummaryCell({
+function Chip({
+  icon: Icon,
   label,
-  children,
+  value,
   className = "",
 }: {
+  icon?: React.ComponentType<{ className?: string }>;
   label: string;
-  children: React.ReactNode;
+  value: React.ReactNode;
   className?: string;
 }) {
   return (
-    <div className={`min-w-0 ${className}`}>
-      <div className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-        {label}
-      </div>
-      <div className="mt-1.5 text-sm font-medium text-foreground truncate">{children}</div>
+    <span
+      className={`inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs ${className}`}
+    >
+      {Icon && <Icon className="h-3 w-3 opacity-70" />}
+      <span className="text-muted-foreground">{label}</span>
+      <span className="font-medium text-foreground">{value}</span>
+    </span>
+  );
+}
+
+function SectionHeader({
+  icon: Icon,
+  children,
+}: {
+  icon?: React.ComponentType<{ className?: string }>;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+      {Icon && <Icon className="h-3.5 w-3.5" />}
+      {children}
     </div>
   );
 }
@@ -128,7 +146,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
       <div className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
         {label}
       </div>
-      <div className="mt-1 text-sm text-foreground">{children}</div>
+      <div className="mt-1 text-sm leading-relaxed text-foreground">{children}</div>
     </div>
   );
 }
@@ -158,59 +176,79 @@ export function CaseDetail({ caseLog, onMarkReviewed, isMarking, onCloseCase, is
 
   return (
     <div className="flex h-full flex-col">
-      {/* Header strip */}
-      <div className="border-b border-border px-6 pt-5 pb-3">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-[11px] font-mono text-muted-foreground">
-            {caseLog.session_id ?? `#${caseLog.id}`}
-          </span>
-          <span className="text-muted-foreground/40">·</span>
-          <span className="text-[11px] text-muted-foreground">
-            {caseLog.contact_channel ?? "Unknown channel"}
-          </span>
-          <span className="text-muted-foreground/40">·</span>
-          <span className="text-[11px] text-muted-foreground">{caseLog.age_band ?? "Age n/a"}</span>
-        </div>
-        <h2 className="mt-2 text-lg font-semibold tracking-tight text-foreground">
-          {caseLog.reason_for_visit ?? "Reason not specified"}
-        </h2>
-      </div>
+      <div className="flex-1 overflow-y-auto">
+        {/* 1. Case narrative — primary focus */}
+        <section className="px-7 pt-7 pb-6">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-muted-foreground">
+            <span className="font-mono">{caseLog.session_id ?? `#${caseLog.id}`}</span>
+            <span className="text-muted-foreground/40">·</span>
+            <span>{caseLog.contact_channel ?? "Unknown channel"}</span>
+            <span className="text-muted-foreground/40">·</span>
+            <span>{caseLog.age_band ?? "Age n/a"}</span>
+            <span className="text-muted-foreground/40">·</span>
+            <span>Logged {relTime(caseLog.created_at)}</span>
+          </div>
+          <h2 className="mt-3 text-lg font-semibold tracking-tight text-foreground">
+            {caseLog.reason_for_visit ?? "Reason not specified"}
+          </h2>
+          <blockquote className="mt-4 border-l-2 border-foreground/15 pl-4 text-[15px] leading-7 text-foreground/90">
+            {caseLog.user_message ?? "No patient message provided."}
+          </blockquote>
 
-      {/* Summary block */}
-      <div className="px-6 pt-4 pb-5 sm:pt-5 sm:pb-6 border-b border-border bg-muted/30">
-        <div className="grid grid-cols-2 gap-x-4 gap-y-4 sm:grid-cols-4">
-          <SummaryCell label="Status">
-            <span
-              className={`inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-xs font-medium ${statusTone(caseLog.case_status)}`}
-            >
-              {statusLabel(caseLog.case_status)}
-            </span>
-          </SummaryCell>
-          <SummaryCell label="Urgency">
-            <UrgencyBadge value={caseLog.urgency_level} />
-          </SummaryCell>
-          <SummaryCell label="Queue">
-            <span className="inline-flex items-center gap-1.5">
-              <Inbox className="h-3.5 w-3.5 text-muted-foreground" />
-              {caseLog.recommended_queue ?? "Unassigned"}
-            </span>
-          </SummaryCell>
-          <SummaryCell label="Escalation">
+          {flags.length > 0 && (
+            <div className="mt-5 rounded-lg border border-emergency/20 bg-emergency-soft px-4 py-3">
+              <div className="flex items-center gap-2 text-emergency">
+                <AlertTriangle className="h-4 w-4" />
+                <span className="text-xs font-semibold uppercase tracking-wider">Red flags</span>
+              </div>
+              <ul className="mt-2 space-y-1">
+                {flags.map((f, i) => (
+                  <li key={i} className="text-sm text-foreground">• {f}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </section>
+
+        {/* 2. Compact status strip */}
+        <div className="border-y border-border bg-muted/30 px-7 py-3">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <Chip
+              label="Status"
+              value={statusLabel(caseLog.case_status)}
+              className={statusTone(caseLog.case_status)}
+            />
+            <Chip label="Urgency" value={<UrgencyBadge value={caseLog.urgency_level} />} className="border-border bg-card" />
+            <Chip
+              icon={Inbox}
+              label="Queue"
+              value={caseLog.recommended_queue ?? "Unassigned"}
+              className="border-border bg-card"
+            />
             {caseLog.escalation_required ? (
-              <span className="inline-flex items-center gap-1 rounded-md border border-emergency/25 bg-emergency-soft px-2 py-0.5 text-xs font-semibold uppercase tracking-wide text-emergency">
-                <ShieldAlert className="h-3 w-3" /> Required
-              </span>
+              <Chip
+                icon={ShieldAlert}
+                label="Escalation"
+                value="Required"
+                className="border-emergency/25 bg-emergency-soft text-emergency"
+              />
             ) : (
-              <span className="text-sm text-muted-foreground">Not required</span>
+              <Chip label="Escalation" value="Not required" className="border-border bg-card" />
             )}
-          </SummaryCell>
+            {assignedQueue && (
+              <Chip
+                icon={UserPlus}
+                label="Assigned"
+                value={queueLabel(assignedQueue)}
+                className="border-border bg-card"
+              />
+            )}
+          </div>
         </div>
-      </div>
 
-      {/* Actions */}
-      <div className="border-b border-border px-6 py-3">
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="inline-flex flex-wrap items-center gap-1.5 rounded-lg border border-border bg-card p-1">
+        {/* 3. Actions */}
+        <div className="border-b border-border px-7 py-3">
+          <div className="flex flex-wrap items-center gap-2">
             <Button
               size="sm"
               disabled={reviewedDisabled}
@@ -240,123 +278,64 @@ export function CaseDetail({ caseLog, onMarkReviewed, isMarking, onCloseCase, is
             <Button size="sm" variant="ghost" onClick={() => act("Calling patient…")}>
               <Phone className="h-4 w-4" /> Call
             </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="ml-auto text-muted-foreground"
+              disabled={closeDisabled}
+              onClick={() => onCloseCase?.(caseLog)}
+            >
+              <XCircle className="h-4 w-4" /> {isClosed ? "Closed" : "Close case"}
+            </Button>
           </div>
-          <Button
-            size="sm"
-            variant="ghost"
-            className="ml-auto text-muted-foreground"
-            disabled={closeDisabled}
-            onClick={() => onCloseCase?.(caseLog)}
-          >
-            <XCircle className="h-4 w-4" /> {isClosed ? "Closed" : "Close case"}
-          </Button>
-        </div>
-      </div>
-
-      {/* Body */}
-      <div className="flex-1 overflow-y-auto px-6 py-5 space-y-6">
-        {/* Key triage fields */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Field label="Next action">{caseLog.next_action ?? "—"}</Field>
-          <Field label="Human-readable summary">{caseLog.human_readable_summary ?? "—"}</Field>
         </div>
 
-        {flags.length > 0 && (
-          <div className="rounded-lg border border-emergency/20 bg-emergency-soft px-4 py-3">
-            <div className="flex items-center gap-2 text-emergency">
-              <AlertTriangle className="h-4 w-4" />
-              <span className="text-xs font-semibold uppercase tracking-wider">Red flags</span>
+        {/* 4. Supporting sections */}
+        <div className="px-7 py-6 space-y-7">
+          <section className="space-y-3">
+            <SectionHeader icon={ListChecks}>Triage</SectionHeader>
+            <div className="space-y-4 rounded-lg border border-border bg-card px-4 py-4">
+              <Field label="Next action">{caseLog.next_action ?? "—"}</Field>
+              <Field label="Staff summary">
+                {caseLog.staff_summary ?? "No staff summary generated."}
+              </Field>
+              <Field label="Human-readable summary">
+                {caseLog.human_readable_summary ?? "—"}
+              </Field>
             </div>
-            <ul className="mt-2 space-y-1">
-              {flags.map((f, i) => (
-                <li key={i} className="text-sm text-foreground">• {f}</li>
-              ))}
-            </ul>
-          </div>
-        )}
+          </section>
 
-        <section>
-          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            <ListChecks className="h-3.5 w-3.5" />
-            Staff summary
-          </div>
-          <p className="mt-2 rounded-md border border-border bg-card px-4 py-3 text-sm leading-relaxed text-foreground">
-            {caseLog.staff_summary ?? "No staff summary generated."}
-          </p>
-        </section>
+          <section className="space-y-3">
+            <SectionHeader icon={Mail}>Patient-facing message</SectionHeader>
+            <p className="rounded-lg border border-border bg-card px-4 py-3 text-sm leading-relaxed text-foreground">
+              {caseLog.patient_message ?? "—"}
+            </p>
+          </section>
 
-        <section>
-          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            <Mail className="h-3.5 w-3.5" />
-            Patient-facing message
-          </div>
-          <p className="mt-2 rounded-md border border-border bg-card px-4 py-3 text-sm leading-relaxed text-foreground">
-            {caseLog.patient_message ?? "—"}
-          </p>
-        </section>
-
-        <section>
-          <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            Original patient message
-          </div>
-          <blockquote className="mt-2 rounded-md border-l-2 border-foreground/20 bg-muted/40 px-4 py-3 text-sm italic text-foreground">
-            {caseLog.user_message ?? "—"}
-          </blockquote>
-        </section>
-
-        <section>
-          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            <Clock className="h-3.5 w-3.5" />
-            Activity
-          </div>
-          <ol className="mt-3 space-y-3">
-            {buildTimeline(caseLog).map((ev, i, arr) => {
-              const Icon = ev.icon;
-              const isLast = i === arr.length - 1;
-              return (
-                <li key={ev.key} className="relative flex gap-3 pl-1">
-                  <div className="flex flex-col items-center">
-                    <span className="flex h-6 w-6 items-center justify-center rounded-full border border-border bg-card text-muted-foreground">
-                      <Icon className="h-3 w-3" />
-                    </span>
-                    {!isLast && <span className="mt-1 w-px flex-1 bg-border" />}
-                  </div>
-                  <div className="min-w-0 flex-1 pb-1">
-                    <div className="text-sm font-medium text-foreground">{ev.label}</div>
-                    <div className="text-xs text-muted-foreground">{relTime(ev.iso)}</div>
-                    <div className="text-[11px] text-muted-foreground/70">{fmtTime(ev.iso)}</div>
-                  </div>
-                </li>
-              );
-            })}
-          </ol>
-        </section>
-
-
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 pt-2 text-xs text-muted-foreground border-t border-border">
-          <span className="flex items-center gap-1.5">
-            <Clock className="h-3 w-3" />
-            Logged {fmtTime(caseLog.created_at)}
-          </span>
-          {caseLog.reviewed_at && (
-            <span className="flex items-center gap-1.5">
-              <CheckCircle2 className="h-3 w-3 text-routine" />
-              Reviewed {fmtTime(caseLog.reviewed_at)}
-            </span>
-          )}
-          {caseLog.closed_at && (
-            <span className="flex items-center gap-1.5">
-              <XCircle className="h-3 w-3 text-muted-foreground" />
-              Closed {fmtTime(caseLog.closed_at)}
-            </span>
-          )}
-          {assignedQueue && (
-            <span className="flex items-center gap-1.5">
-              <UserPlus className="h-3 w-3 text-foreground/60" />
-              Assigned to {queueLabel(assignedQueue)}
-              {caseLog.assigned_at ? ` · ${fmtTime(caseLog.assigned_at)}` : ""}
-            </span>
-          )}
+          <section className="space-y-3">
+            <SectionHeader icon={Clock}>Activity</SectionHeader>
+            <ol className="space-y-3 rounded-lg border border-border bg-card px-4 py-4">
+              {buildTimeline(caseLog).map((ev, i, arr) => {
+                const Icon = ev.icon;
+                const isLast = i === arr.length - 1;
+                return (
+                  <li key={ev.key} className="relative flex gap-3 pl-1">
+                    <div className="flex flex-col items-center">
+                      <span className="flex h-6 w-6 items-center justify-center rounded-full border border-border bg-background text-muted-foreground">
+                        <Icon className="h-3 w-3" />
+                      </span>
+                      {!isLast && <span className="mt-1 w-px flex-1 bg-border" />}
+                    </div>
+                    <div className="min-w-0 flex-1 pb-1">
+                      <div className="text-sm font-medium text-foreground">{ev.label}</div>
+                      <div className="text-xs text-muted-foreground">{relTime(ev.iso)}</div>
+                      <div className="text-[11px] text-muted-foreground/70">{fmtTime(ev.iso)}</div>
+                    </div>
+                  </li>
+                );
+              })}
+            </ol>
+          </section>
         </div>
       </div>
     </div>
