@@ -14,6 +14,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedDashboardIndexRouteImport } from './routes/_authenticated/dashboard.index'
 import { Route as ApiPublicIntakeRouteImport } from './routes/api/public/intake'
 import { Route as AuthenticatedDashboardCasesIdRouteImport } from './routes/_authenticated/dashboard.cases.$id'
 
@@ -41,6 +42,12 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedDashboardIndexRoute =
+  AuthenticatedDashboardIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedDashboardRoute,
+  } as any)
 const ApiPublicIntakeRoute = ApiPublicIntakeRouteImport.update({
   id: '/api/public/intake',
   path: '/api/public/intake',
@@ -59,14 +66,15 @@ export interface FileRoutesByFullPath {
   '/intake': typeof IntakeRoute
   '/dashboard': typeof AuthenticatedDashboardRouteWithChildren
   '/api/public/intake': typeof ApiPublicIntakeRoute
+  '/dashboard/': typeof AuthenticatedDashboardIndexRoute
   '/dashboard/cases/$id': typeof AuthenticatedDashboardCasesIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/intake': typeof IntakeRoute
-  '/dashboard': typeof AuthenticatedDashboardRouteWithChildren
   '/api/public/intake': typeof ApiPublicIntakeRoute
+  '/dashboard': typeof AuthenticatedDashboardIndexRoute
   '/dashboard/cases/$id': typeof AuthenticatedDashboardCasesIdRoute
 }
 export interface FileRoutesById {
@@ -77,6 +85,7 @@ export interface FileRoutesById {
   '/intake': typeof IntakeRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRouteWithChildren
   '/api/public/intake': typeof ApiPublicIntakeRoute
+  '/_authenticated/dashboard/': typeof AuthenticatedDashboardIndexRoute
   '/_authenticated/dashboard/cases/$id': typeof AuthenticatedDashboardCasesIdRoute
 }
 export interface FileRouteTypes {
@@ -87,14 +96,15 @@ export interface FileRouteTypes {
     | '/intake'
     | '/dashboard'
     | '/api/public/intake'
+    | '/dashboard/'
     | '/dashboard/cases/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/auth'
     | '/intake'
-    | '/dashboard'
     | '/api/public/intake'
+    | '/dashboard'
     | '/dashboard/cases/$id'
   id:
     | '__root__'
@@ -104,6 +114,7 @@ export interface FileRouteTypes {
     | '/intake'
     | '/_authenticated/dashboard'
     | '/api/public/intake'
+    | '/_authenticated/dashboard/'
     | '/_authenticated/dashboard/cases/$id'
   fileRoutesById: FileRoutesById
 }
@@ -152,6 +163,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/dashboard/': {
+      id: '/_authenticated/dashboard/'
+      path: '/'
+      fullPath: '/dashboard/'
+      preLoaderRoute: typeof AuthenticatedDashboardIndexRouteImport
+      parentRoute: typeof AuthenticatedDashboardRoute
+    }
     '/api/public/intake': {
       id: '/api/public/intake'
       path: '/api/public/intake'
@@ -170,11 +188,13 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedDashboardRouteChildren {
+  AuthenticatedDashboardIndexRoute: typeof AuthenticatedDashboardIndexRoute
   AuthenticatedDashboardCasesIdRoute: typeof AuthenticatedDashboardCasesIdRoute
 }
 
 const AuthenticatedDashboardRouteChildren: AuthenticatedDashboardRouteChildren =
   {
+    AuthenticatedDashboardIndexRoute: AuthenticatedDashboardIndexRoute,
     AuthenticatedDashboardCasesIdRoute: AuthenticatedDashboardCasesIdRoute,
   }
 
@@ -204,3 +224,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
