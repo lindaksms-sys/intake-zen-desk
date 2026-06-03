@@ -20,6 +20,8 @@ interface Props {
   caseLog: CaseLog | null;
   onMarkReviewed?: (c: CaseLog) => void;
   isMarking?: boolean;
+  onCloseCase?: (c: CaseLog) => void;
+  isClosing?: boolean;
 }
 
 function fmtTime(iso: string) {
