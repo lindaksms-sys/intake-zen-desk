@@ -105,6 +105,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         content: "AI-triaged patient intake for women's clinics.",
       },
       { name: "twitter:image", content: ogCardAsset.url },
+      { name: "description", content: "Clinic Compass is a staff dashboard for AI-triaged clinic intake cases." },
+      { property: "og:description", content: "Clinic Compass is a staff dashboard for AI-triaged clinic intake cases." },
+      { name: "twitter:description", content: "Clinic Compass is a staff dashboard for AI-triaged clinic intake cases." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/de20a9b2-1c1e-4298-a4d9-809e374dd798/id-preview-89d91e95--3df0e600-5533-46f0-86e3-3c74287a0bf6.lovable.app-1780511434738.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/de20a9b2-1c1e-4298-a4d9-809e374dd798/id-preview-89d91e95--3df0e600-5533-46f0-86e3-3c74287a0bf6.lovable.app-1780511434738.png" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
