@@ -20,7 +20,7 @@ export interface CaseLog {
   contact_channel: string | null;
   reason_for_visit: string | null;
   urgency_level: Urgency | null;
-  case_status: CaseStatus | null;
+  case_status?: CaseStatus | null;
   recommended_queue: string | null;
   escalation_required: boolean | null;
   red_flags: string[] | string | null;
