@@ -1,12 +1,6 @@
-import { createClient } from "@supabase/supabase-js";
-
-// Publishable (anon) key — safe to ship in client bundle.
-const SUPABASE_URL = "https://solhhlgccmrpzzljvjqb.supabase.co";
-const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_qSqCS4vTOPC01LIlNhVYqA_LvhWb9gi";
-
-export const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
-  auth: { persistSession: false },
-});
+// Re-export the persistent, authenticated Supabase client from the integration.
+// Sessions are persisted in localStorage so RLS sees the signed-in staff user.
+export { supabase } from "@/integrations/supabase/client";
 
 export type Urgency = "emergency" | "urgent_same_day" | "routine" | "admin_only" | string;
 
