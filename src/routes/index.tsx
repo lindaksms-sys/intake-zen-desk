@@ -51,7 +51,11 @@ function Dashboard() {
   const [query, setQuery] = useState("");
   const [selectedId, setSelectedId] = useState<string | number | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [sampleOverrides, setSampleOverrides] = useState<
+    Record<string, Partial<CaseLog>>
+  >({});
   const isMobile = useIsMobile();
+  const queryClient = useQueryClient();
 
   const { data, isLoading, isError, refetch, isFetching } = useQuery({
     queryKey: ["agent_case_logs"],
@@ -61,7 +65,15 @@ function Dashboard() {
 
   const liveCases = data ?? [];
   const usingSample = !isLoading && !isError && liveCases.length === 0;
-  const allCases = liveCases.length > 0 ? liveCases : SAMPLE_CASES;
+  const baseCases = liveCases.length > 0 ? liveCases : SAMPLE_CASES;
+  const allCases = useMemo(
+    () =>
+      baseCases.map((c) => {
+        const o = sampleOverrides[String(c.id)];
+        return o ? { ...c, ...o } : c;
+      }),
+    [baseCases, sampleOverrides],
+  );
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -79,6 +91,41 @@ function Dashboard() {
     setSelectedId(c.id ?? null);
     if (isMobile) setMobileOpen(true);
   };
+
+  const markReviewed = useMutation({
+    mutationFn: async (c: CaseLog) => {
+      const reviewed_at = new Date().toISOString();
+      if (usingSample || liveCases.length === 0) {
+        return { ...c, case_status: "reviewed", reviewed_at } as CaseLog;
+      }
+      const { data, error } = await supabase
+        .from("agent_case_logs")
+        .update({ case_status: "reviewed", reviewed_at })
+        .eq("id", c.id as never)
+        .select()
+        .single();
+      if (error) throw error;
+      return data as CaseLog;
+    },
+    onSuccess: (updated) => {
+      toast.success("Case marked as reviewed");
+      if (usingSample || liveCases.length === 0) {
+        setSampleOverrides((prev) => ({
+          ...prev,
+          [String(updated.id)]: {
+            case_status: updated.case_status,
+            reviewed_at: updated.reviewed_at,
+          },
+        }));
+      } else {
+        queryClient.invalidateQueries({ queryKey: ["agent_case_logs"] });
+      }
+    },
+    onError: (err: unknown) => {
+      const msg = err instanceof Error ? err.message : "Update failed";
+      toast.error("Couldn't mark as reviewed", { description: msg });
+    },
+  });
 
   return (
     <div className="min-h-screen bg-background text-foreground">
