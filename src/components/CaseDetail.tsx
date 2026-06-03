@@ -43,6 +43,47 @@ function fmtTime(iso: string) {
   });
 }
 
+function relTime(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime();
+  const abs = Math.abs(diff);
+  const past = diff >= 0;
+  const min = 60_000, hr = 60 * min, day = 24 * hr;
+  let val: number; let unit: string;
+  if (abs < min) return past ? "just now" : "in a moment";
+  if (abs < hr) { val = Math.round(abs / min); unit = "min"; }
+  else if (abs < day) { val = Math.round(abs / hr); unit = "hr"; }
+  else if (abs < 30 * day) { val = Math.round(abs / day); unit = "day"; }
+  else if (abs < 365 * day) { val = Math.round(abs / (30 * day)); unit = "mo"; }
+  else { val = Math.round(abs / (365 * day)); unit = "yr"; }
+  return past ? `${val} ${unit}${val === 1 ? "" : "s"} ago` : `in ${val} ${unit}${val === 1 ? "" : "s"}`;
+}
+
+type TimelineEvent = {
+  key: string;
+  label: string;
+  iso: string;
+  icon: React.ComponentType<{ className?: string }>;
+};
+
+function buildTimeline(c: CaseLog): TimelineEvent[] {
+  const events: TimelineEvent[] = [
+    { key: "intake", label: "Intake received", iso: c.created_at, icon: Inbox },
+  ];
+  if (c.assigned_at && c.assigned_to_queue === "nurse_review") {
+    events.push({ key: "assigned_nurse", label: "Assigned to nurse", iso: c.assigned_at, icon: UserPlus });
+  }
+  if (c.assigned_at && c.assigned_to_queue === "front_desk") {
+    events.push({ key: "assigned_front", label: "Assigned to front desk", iso: c.assigned_at, icon: UserPlus });
+  }
+  if (c.reviewed_at) {
+    events.push({ key: "reviewed", label: "Marked reviewed", iso: c.reviewed_at, icon: CheckCircle2 });
+  }
+  if (c.closed_at) {
+    events.push({ key: "closed", label: "Case closed", iso: c.closed_at, icon: XCircle });
+  }
+  return events.sort((a, b) => new Date(a.iso).getTime() - new Date(b.iso).getTime());
+}
+
 function redFlagsList(value: CaseLog["red_flags"]): string[] {
   if (!value) return [];
   if (Array.isArray(value)) return value;
