@@ -111,7 +111,7 @@ function Dashboard() {
   const markReviewed = useMutation({
     mutationFn: async (c: CaseLog) => {
       const reviewed_at = new Date().toISOString();
-      if (usingSample || liveCases.length === 0) {
+      if (usingSample) {
         return { ...c, case_status: "reviewed", reviewed_at } as CaseLog;
       }
       const { data, error } = await supabase
@@ -120,12 +120,20 @@ function Dashboard() {
         .eq("id", c.id as never)
         .select()
         .single();
-      if (error) throw error;
+      if (error) {
+        console.error("[Clinic Intake] mark reviewed FAILED", {
+          id: c.id,
+          message: error.message,
+          code: error.code,
+          hint: error.hint,
+        });
+        throw error;
+      }
       return data as CaseLog;
     },
     onSuccess: (updated) => {
       toast.success("Case marked as reviewed");
-      if (usingSample || liveCases.length === 0) {
+      if (usingSample) {
         setSampleOverrides((prev) => ({
           ...prev,
           [String(updated.id)]: {
