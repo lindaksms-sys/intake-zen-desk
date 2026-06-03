@@ -2,9 +2,23 @@ import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 
 const IntakeSchema = z.object({
-  message: z.string().trim().min(3).max(2000),
+  // Legacy single-message support
+  message: z.string().trim().min(3).max(2000).optional(),
   contact_channel: z.enum(["chat", "phone", "whatsapp"]).optional().nullable(),
   age_band: z.enum(["unknown", "teen_20s", "30s_40s", "50s_60s"]).optional().nullable(),
+
+  // New structured intake fields
+  full_name: z.string().trim().min(1).max(120).optional(),
+  age_or_dob: z.string().trim().max(40).optional(),
+  contact_value: z.string().trim().max(60).optional(),
+  reason_for_visit: z.string().trim().min(1).max(200).optional(),
+  details: z.string().trim().max(2000).optional(),
+  pregnancy_status: z
+    .enum(["unknown", "not_pregnant", "possibly", "pregnant"])
+    .optional()
+    .nullable(),
+  last_menstrual_period: z.string().trim().max(40).optional(),
+  consent: z.boolean().optional(),
 });
 
 const EMERGENCY_KEYWORDS = [
@@ -83,25 +97,62 @@ export const Route = createFileRoute("/api/public/intake")({
           );
         }
 
-        const { message, contact_channel, age_band } = parsed.data;
-        const t = triage(message);
+        const d = parsed.data;
+
+        // Compose a structured user_message from the new fields, falling back
+        // to the legacy single-message payload.
+        const composedParts: string[] = [];
+        if (d.reason_for_visit) composedParts.push(`Reason: ${d.reason_for_visit}`);
+        if (d.details) composedParts.push(`Details: ${d.details}`);
+        if (d.pregnancy_status && d.pregnancy_status !== "unknown") {
+          composedParts.push(`Pregnancy status: ${d.pregnancy_status}`);
+        }
+        if (d.last_menstrual_period) {
+          composedParts.push(`Last menstrual period: ${d.last_menstrual_period}`);
+        }
+        if (d.full_name) composedParts.push(`Name: ${d.full_name}`);
+        if (d.age_or_dob) composedParts.push(`Age/DOB: ${d.age_or_dob}`);
+        if (d.contact_value && d.contact_channel) {
+          composedParts.push(`Contact (${d.contact_channel}): ${d.contact_value}`);
+        }
+
+        const message =
+          composedParts.length > 0
+            ? composedParts.join("\n")
+            : d.message ?? "";
+
+        if (message.trim().length < 3) {
+          return Response.json(
+            { error: "Please describe the reason for your visit." },
+            { status: 400 },
+          );
+        }
+
+        // Triage runs over the symptom/details text plus the reason
+        const triageText = [d.reason_for_visit, d.details, d.message]
+          .filter(Boolean)
+          .join(" ")
+          .trim() || message;
+
+        const t = triage(triageText);
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
         const session_id = crypto.randomUUID();
-        const human_readable_summary = message.length > 140
-          ? `${message.slice(0, 137)}…`
-          : message;
-        const staff_summary = `[${t.urgency_level}] ${human_readable_summary}`;
+        const summarySource = d.reason_for_visit || d.details || d.message || message;
+        const human_readable_summary =
+          summarySource.length > 140 ? `${summarySource.slice(0, 137)}…` : summarySource;
+        const namePrefix = d.full_name ? `${d.full_name} — ` : "";
+        const staff_summary = `[${t.urgency_level}] ${namePrefix}${human_readable_summary}`;
 
         const { data, error } = await supabaseAdmin
           .from("agent_case_logs")
           .insert({
             session_id,
             user_message: message,
-            age_band: age_band ?? null,
-            contact_channel: contact_channel ?? null,
-            reason_for_visit: null,
+            age_band: d.age_band ?? null,
+            contact_channel: d.contact_channel ?? null,
+            reason_for_visit: d.reason_for_visit ?? null,
             urgency_level: t.urgency_level,
             recommended_queue: t.recommended_queue,
             escalation_required: t.escalation_required,
