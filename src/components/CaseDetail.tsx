@@ -22,6 +22,15 @@ interface Props {
   isMarking?: boolean;
   onCloseCase?: (c: CaseLog) => void;
   isClosing?: boolean;
+  onAssign?: (c: CaseLog, queue: "nurse_review" | "front_desk") => void;
+  isAssigning?: boolean;
+}
+
+function queueLabel(q: string | null | undefined): string {
+  if (!q) return "Unassigned";
+  if (q === "nurse_review") return "Nurse review";
+  if (q === "front_desk") return "Front desk";
+  return q.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
 function fmtTime(iso: string) {
