@@ -10,6 +10,8 @@ import {
 import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
+import faviconAsset from "../assets/favicon.png.asset.json";
+import ogCardAsset from "../assets/og-card.jpg.asset.json";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -78,20 +80,36 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { title: "Clinic Intake Copilot" },
+      {
+        name: "description",
+        content:
+          "AI-triaged patient intake for women's clinics. Route urgent cases to nurses, admin to front desk, in seconds.",
+      },
+      { name: "theme-color", content: "#1f2937" },
+      { property: "og:site_name", content: "Clinic Intake Copilot" },
+      { property: "og:title", content: "Clinic Intake Copilot" },
+      {
+        property: "og:description",
+        content:
+          "AI-triaged patient intake for women's clinics. Urgent to nurses, admin to front desk, in seconds.",
+      },
       { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary" },
-      { name: "twitter:site", content: "@Lovable" },
+      { property: "og:image", content: ogCardAsset.url },
+      { property: "og:image:width", content: "1216" },
+      { property: "og:image:height", content: "640" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "Clinic Intake Copilot" },
+      {
+        name: "twitter:description",
+        content: "AI-triaged patient intake for women's clinics.",
+      },
+      { name: "twitter:image", content: ogCardAsset.url },
     ],
     links: [
-      {
-        rel: "stylesheet",
-        href: appCss,
-      },
+      { rel: "stylesheet", href: appCss },
+      { rel: "icon", type: "image/png", href: faviconAsset.url },
+      { rel: "apple-touch-icon", href: faviconAsset.url },
     ],
   }),
   shellComponent: RootShell,
