@@ -18,6 +18,8 @@ import type { CaseLog } from "@/lib/supabase";
 
 interface Props {
   caseLog: CaseLog | null;
+  onMarkReviewed?: (c: CaseLog) => void;
+  isMarking?: boolean;
 }
 
 function fmtTime(iso: string) {
