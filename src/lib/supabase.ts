@@ -10,6 +10,8 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
 
 export type Urgency = "emergency" | "urgent_same_day" | "routine" | "admin_only" | string;
 
+export type CaseStatus = "new" | "reviewed" | "in_progress" | "closed" | string;
+
 export interface CaseLog {
   id?: string | number;
   session_id: string | null;
@@ -18,6 +20,7 @@ export interface CaseLog {
   contact_channel: string | null;
   reason_for_visit: string | null;
   urgency_level: Urgency | null;
+  case_status?: CaseStatus | null;
   recommended_queue: string | null;
   escalation_required: boolean | null;
   red_flags: string[] | string | null;
