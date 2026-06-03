@@ -178,11 +178,23 @@ export function CaseDetail({ caseLog, onMarkReviewed, isMarking, onCloseCase, is
               <CheckCircle2 className="h-4 w-4" />
               {status === "reviewed" ? "Reviewed" : "Mark reviewed"}
             </Button>
-            <Button size="sm" variant="ghost" onClick={() => act("Assigned to nurse")}>
-              <UserPlus className="h-4 w-4" /> Nurse
+            <Button
+              size="sm"
+              variant="ghost"
+              disabled={assignDisabled}
+              onClick={() => onAssign?.(caseLog, "nurse_review")}
+            >
+              <UserPlus className="h-4 w-4" />
+              {assignedQueue === "nurse_review" ? "Nurse ✓" : "Nurse"}
             </Button>
-            <Button size="sm" variant="ghost" onClick={() => act("Assigned to front desk")}>
-              <UserPlus className="h-4 w-4" /> Front desk
+            <Button
+              size="sm"
+              variant="ghost"
+              disabled={assignDisabled}
+              onClick={() => onAssign?.(caseLog, "front_desk")}
+            >
+              <UserPlus className="h-4 w-4" />
+              {assignedQueue === "front_desk" ? "Front desk ✓" : "Front desk"}
             </Button>
             <Button size="sm" variant="ghost" onClick={() => act("Calling patient…")}>
               <Phone className="h-4 w-4" /> Call
