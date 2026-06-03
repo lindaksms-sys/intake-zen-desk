@@ -206,7 +206,7 @@ function IntakePage() {
     if (EMERGENCY_KEYWORDS.some((kw) => text.includes(kw))) return true;
     if (form.baby_movement_concern || form.bleeding_or_severe_pain) return true;
     if (form.symptom_severity === "severe") return true;
-    if (form.gynae_symptoms.includes("Bleeding") && form.symptom_severity === "severe") return true;
+    if (form.gynae_symptoms.includes("Bleeding") && form.bleeding_or_severe_pain) return true;
     return false;
   }, [form]);
 
