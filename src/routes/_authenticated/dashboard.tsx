@@ -16,6 +16,8 @@ import { StatsCards } from "@/components/StatsCards";
 import { OpsMetrics } from "@/components/OpsMetrics";
 import { CaseListItem } from "@/components/CaseListItem";
 import { CaseDetail } from "@/components/CaseDetail";
+import { KPI_LABEL, matchesKpi, type KpiFilterKey } from "@/lib/kpi-filters";
+import { X } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
