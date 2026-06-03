@@ -310,25 +310,27 @@ function Dashboard() {
             </div>
           </div>
 
-          <div className="mt-5 space-y-3">
+          <div className="mt-5 space-y-2.5">
             <OpsMetrics cases={allCases} />
             <StatsCards cases={allCases} />
           </div>
 
-          <div className="mt-4 flex gap-1 border-b border-transparent">
+          <div className="mt-2 flex gap-1 border-b border-border/60">
             {FILTERS.map((f) => {
               const active = filter === f.key;
               return (
                 <button
                   key={f.key}
                   onClick={() => setFilter(f.key)}
-                  className={`relative px-3 py-2 text-sm font-medium transition-colors
-                    ${active ? "text-foreground" : "text-muted-foreground hover:text-foreground"}
+                  className={`relative px-3 py-2 text-sm transition-colors
+                    ${active
+                      ? "font-semibold text-foreground"
+                      : "font-medium text-muted-foreground/80 hover:text-foreground"}
                   `}
                 >
                   {f.label}
                   {active && (
-                    <span className="absolute inset-x-2 -bottom-px h-0.5 rounded-full bg-foreground" />
+                    <span className="absolute inset-x-2 -bottom-px h-[2px] rounded-full bg-foreground" />
                   )}
                 </button>
               );
