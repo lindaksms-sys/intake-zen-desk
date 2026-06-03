@@ -68,6 +68,7 @@ async function fetchCases(): Promise<CaseLog[]> {
 function Dashboard() {
   const navigate = useNavigate();
   const [filter, setFilter] = useState<FilterKey>("all");
+  const [kpiFilter, setKpiFilter] = useState<KpiFilterKey | null>(null);
   const [query, setQuery] = useState("");
   const [selectedId, setSelectedId] = useState<string | number | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
