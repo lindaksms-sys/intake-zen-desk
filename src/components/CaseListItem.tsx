@@ -20,8 +20,8 @@ function timeAgo(iso: string): string {
   return `${d}d ago`;
 }
 
-function StatusChip({ status }: { status: string }) {
-  const s = status.toLowerCase();
+function StatusChip({ status }: { status: string | null | undefined }) {
+  const s = (status ?? "new").toLowerCase();
   if (s === "reviewed") {
     return (
       <span className="inline-flex items-center gap-1 rounded-full border border-routine/25 bg-routine-soft px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-routine">
@@ -36,7 +36,11 @@ function StatusChip({ status }: { status: string }) {
       </span>
     );
   }
-  return null;
+  return (
+    <span className="inline-flex items-center gap-1 rounded-full border border-foreground/15 bg-card px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-foreground">
+      <Circle className="h-2.5 w-2.5" /> New
+    </span>
+  );
 }
 
 export function CaseListItem({ caseLog, selected, onSelect }: Props) {
