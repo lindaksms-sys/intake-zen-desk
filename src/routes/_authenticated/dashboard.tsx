@@ -13,6 +13,7 @@ import { supabase, type CaseLog } from "@/lib/supabase";
 import { SAMPLE_CASES } from "@/lib/sample-cases";
 import { normalizeUrgency, type UrgencyKey } from "@/lib/urgency";
 import { StatsCards } from "@/components/StatsCards";
+import { OpsMetrics } from "@/components/OpsMetrics";
 import { CaseListItem } from "@/components/CaseListItem";
 import { CaseDetail } from "@/components/CaseDetail";
 
