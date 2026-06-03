@@ -1,9 +1,12 @@
 import { useMemo } from "react";
 import type { CaseLog } from "@/lib/supabase";
 import { normalizeUrgency } from "@/lib/urgency";
+import type { KpiFilterKey } from "@/lib/kpi-filters";
 
 interface Props {
   cases: CaseLog[];
+  activeKpi: KpiFilterKey | null;
+  onSelect: (key: KpiFilterKey) => void;
 }
 
 function isToday(iso?: string | null) {
@@ -33,7 +36,7 @@ function formatDuration(ms: number): string {
   return h ? `${d}d ${h}h` : `${d}d`;
 }
 
-export function OpsMetrics({ cases }: Props) {
+export function OpsMetrics({ cases, activeKpi, onSelect }: Props) {
   const metrics = useMemo(() => {
     let newToday = 0;
     let urgentOpen = 0;
@@ -70,33 +73,62 @@ export function OpsMetrics({ cases }: Props) {
     };
   }, [cases]);
 
-  const items = [
-    { label: "New today", value: metrics.newToday, dot: "bg-foreground/30" },
-    { label: "Urgent open", value: metrics.urgentOpen, dot: "bg-urgent", accent: metrics.urgentOpen > 0 ? "text-urgent" : undefined },
-    { label: "Nurse review", value: metrics.nurseQ, dot: "bg-foreground/30" },
-    { label: "Front desk", value: metrics.frontDeskQ, dot: "bg-foreground/30" },
-    { label: "Closed today", value: metrics.closedToday, dot: "bg-routine" },
+  const items: Array<{
+    label: string;
+    value: number | string;
+    dot: string;
+    accent?: string;
+    key?: KpiFilterKey;
+  }> = [
+    { label: "New today", value: metrics.newToday, dot: "bg-foreground/30", key: "new_today" },
+    {
+      label: "Urgent open",
+      value: metrics.urgentOpen,
+      dot: "bg-urgent",
+      accent: metrics.urgentOpen > 0 ? "text-urgent" : undefined,
+      key: "urgent_open",
+    },
+    { label: "Nurse review", value: metrics.nurseQ, dot: "bg-foreground/30", key: "nurse_review" },
+    { label: "Front desk", value: metrics.frontDeskQ, dot: "bg-foreground/30", key: "front_desk" },
+    { label: "Closed today", value: metrics.closedToday, dot: "bg-routine", key: "closed_today" },
     { label: "Avg time to close", value: metrics.avgClose, dot: "bg-foreground/30" },
   ];
 
   return (
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-      {items.map((it) => (
-        <div
-          key={it.label}
-          className="rounded-lg border border-border bg-card px-4 py-3"
-        >
-          <div className="flex items-center gap-2">
-            <span className={`h-1.5 w-1.5 rounded-full ${it.dot}`} />
-            <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-              {it.label}
-            </span>
-          </div>
-          <div className={`mt-1 text-2xl font-semibold tabular-nums ${it.accent ?? "text-foreground"}`}>
-            {it.value}
-          </div>
-        </div>
-      ))}
+      {items.map((it) => {
+        const clickable = !!it.key;
+        const active = clickable && activeKpi === it.key;
+        const base =
+          "rounded-lg border px-4 py-3 text-left transition-colors";
+        const stateClasses = active
+          ? "border-foreground/40 bg-foreground/[0.04] ring-1 ring-foreground/10"
+          : clickable
+            ? "border-border bg-card hover:border-foreground/20 hover:bg-foreground/[0.02] cursor-pointer"
+            : "border-border bg-card";
+        const Wrapper: React.ElementType = clickable ? "button" : "div";
+        return (
+          <Wrapper
+            key={it.label}
+            type={clickable ? "button" : undefined}
+            onClick={clickable ? () => onSelect(it.key as KpiFilterKey) : undefined}
+            aria-pressed={clickable ? active : undefined}
+            className={`${base} ${stateClasses}`}
+          >
+            <div className="flex items-center gap-2">
+              <span className={`h-1.5 w-1.5 rounded-full ${it.dot}`} />
+              <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                {it.label}
+              </span>
+            </div>
+            <div
+              className={`mt-1 text-2xl font-semibold tabular-nums ${it.accent ?? "text-foreground"}`}
+            >
+              {it.value}
+            </div>
+          </Wrapper>
+        );
+      })}
     </div>
   );
 }

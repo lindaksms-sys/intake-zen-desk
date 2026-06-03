@@ -16,6 +16,8 @@ import { StatsCards } from "@/components/StatsCards";
 import { OpsMetrics } from "@/components/OpsMetrics";
 import { CaseListItem } from "@/components/CaseListItem";
 import { CaseDetail } from "@/components/CaseDetail";
+import { KPI_LABEL, matchesKpi, type KpiFilterKey } from "@/lib/kpi-filters";
+import { X } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
@@ -66,6 +68,7 @@ async function fetchCases(): Promise<CaseLog[]> {
 function Dashboard() {
   const navigate = useNavigate();
   const [filter, setFilter] = useState<FilterKey>("all");
+  const [kpiFilter, setKpiFilter] = useState<KpiFilterKey | null>(null);
   const [query, setQuery] = useState("");
   const [selectedId, setSelectedId] = useState<string | number | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -96,12 +99,13 @@ function Dashboard() {
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return allCases.filter((c) => {
+      if (kpiFilter && !matchesKpi(c, kpiFilter)) return false;
       if (filter !== "all" && normalizeUrgency(c.urgency_level) !== filter) return false;
       if (!q) return true;
       return [c.user_message, c.staff_summary, c.reason_for_visit]
         .some((f) => (f ?? "").toLowerCase().includes(q));
     });
-  }, [allCases, filter, query]);
+  }, [allCases, filter, kpiFilter, query]);
 
   const selected = filtered.find((c) => c.id === selectedId) ?? null;
 
@@ -109,6 +113,26 @@ function Dashboard() {
     setSelectedId(c.id ?? null);
     if (isMobile) setMobileOpen(true);
   };
+
+  const handleKpiSelect = (key: KpiFilterKey) => {
+    setKpiFilter((prev) => (prev === key ? null : key));
+    setFilter("all");
+  };
+
+  const handleStatsSelect = (key: KpiFilterKey | "total") => {
+    if (key === "total") {
+      setKpiFilter(null);
+      setFilter("all");
+      return;
+    }
+    handleKpiSelect(key);
+  };
+
+  const handleTabSelect = (key: FilterKey) => {
+    setFilter(key);
+    setKpiFilter(null);
+  };
+
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -311,17 +335,17 @@ function Dashboard() {
           </div>
 
           <div className="mt-5 space-y-2.5">
-            <OpsMetrics cases={allCases} />
-            <StatsCards cases={allCases} />
+            <OpsMetrics cases={allCases} activeKpi={kpiFilter} onSelect={handleKpiSelect} />
+            <StatsCards cases={allCases} activeKpi={kpiFilter} onSelect={handleStatsSelect} />
           </div>
 
           <div className="mt-2 flex gap-1 border-b border-border/60">
             {FILTERS.map((f) => {
-              const active = filter === f.key;
+              const active = !kpiFilter && filter === f.key;
               return (
                 <button
                   key={f.key}
-                  onClick={() => setFilter(f.key)}
+                  onClick={() => handleTabSelect(f.key)}
                   className={`relative px-3 py-2 text-sm transition-colors
                     ${active
                       ? "font-semibold text-foreground"
@@ -336,6 +360,7 @@ function Dashboard() {
               );
             })}
           </div>
+
         </div>
       </header>
 
@@ -350,6 +375,25 @@ function Dashboard() {
         <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(340px,420px)_1fr]">
           {/* Case list */}
           <section aria-label="Case list" className="space-y-2">
+            {kpiFilter && (
+              <div className="flex items-center justify-between rounded-md border border-border/70 bg-foreground/[0.03] px-3 py-1.5">
+                <span className="text-xs text-muted-foreground">
+                  Filtered by:{" "}
+                  <span className="font-medium text-foreground">{KPI_LABEL[kpiFilter]}</span>
+                  <span className="ml-1.5 tabular-nums text-muted-foreground/80">
+                    ({filtered.length})
+                  </span>
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setKpiFilter(null)}
+                  className="inline-flex items-center gap-1 rounded text-xs text-muted-foreground hover:text-foreground cursor-pointer"
+                >
+                  <X className="h-3 w-3" />
+                  Clear
+                </button>
+              </div>
+            )}
             {isLoading ? (
               Array.from({ length: 5 }).map((_, i) => (
                 <Skeleton key={i} className="h-[92px] w-full rounded-lg" />
