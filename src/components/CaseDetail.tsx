@@ -43,6 +43,47 @@ function fmtTime(iso: string) {
   });
 }
 
+function relTime(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime();
+  const abs = Math.abs(diff);
+  const past = diff >= 0;
+  const min = 60_000, hr = 60 * min, day = 24 * hr;
+  let val: number; let unit: string;
+  if (abs < min) return past ? "just now" : "in a moment";
+  if (abs < hr) { val = Math.round(abs / min); unit = "min"; }
+  else if (abs < day) { val = Math.round(abs / hr); unit = "hr"; }
+  else if (abs < 30 * day) { val = Math.round(abs / day); unit = "day"; }
+  else if (abs < 365 * day) { val = Math.round(abs / (30 * day)); unit = "mo"; }
+  else { val = Math.round(abs / (365 * day)); unit = "yr"; }
+  return past ? `${val} ${unit}${val === 1 ? "" : "s"} ago` : `in ${val} ${unit}${val === 1 ? "" : "s"}`;
+}
+
+type TimelineEvent = {
+  key: string;
+  label: string;
+  iso: string;
+  icon: React.ComponentType<{ className?: string }>;
+};
+
+function buildTimeline(c: CaseLog): TimelineEvent[] {
+  const events: TimelineEvent[] = [
+    { key: "intake", label: "Intake received", iso: c.created_at, icon: Inbox },
+  ];
+  if (c.assigned_at && c.assigned_to_queue === "nurse_review") {
+    events.push({ key: "assigned_nurse", label: "Assigned to nurse", iso: c.assigned_at, icon: UserPlus });
+  }
+  if (c.assigned_at && c.assigned_to_queue === "front_desk") {
+    events.push({ key: "assigned_front", label: "Assigned to front desk", iso: c.assigned_at, icon: UserPlus });
+  }
+  if (c.reviewed_at) {
+    events.push({ key: "reviewed", label: "Marked reviewed", iso: c.reviewed_at, icon: CheckCircle2 });
+  }
+  if (c.closed_at) {
+    events.push({ key: "closed", label: "Case closed", iso: c.closed_at, icon: XCircle });
+  }
+  return events.sort((a, b) => new Date(a.iso).getTime() - new Date(b.iso).getTime());
+}
+
 function redFlagsList(value: CaseLog["red_flags"]): string[] {
   if (!value) return [];
   if (Array.isArray(value)) return value;
@@ -262,6 +303,35 @@ export function CaseDetail({ caseLog, onMarkReviewed, isMarking, onCloseCase, is
             {caseLog.user_message ?? "—"}
           </blockquote>
         </section>
+
+        <section>
+          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            <Clock className="h-3.5 w-3.5" />
+            Activity
+          </div>
+          <ol className="mt-3 space-y-3">
+            {buildTimeline(caseLog).map((ev, i, arr) => {
+              const Icon = ev.icon;
+              const isLast = i === arr.length - 1;
+              return (
+                <li key={ev.key} className="relative flex gap-3 pl-1">
+                  <div className="flex flex-col items-center">
+                    <span className="flex h-6 w-6 items-center justify-center rounded-full border border-border bg-card text-muted-foreground">
+                      <Icon className="h-3 w-3" />
+                    </span>
+                    {!isLast && <span className="mt-1 w-px flex-1 bg-border" />}
+                  </div>
+                  <div className="min-w-0 flex-1 pb-1">
+                    <div className="text-sm font-medium text-foreground">{ev.label}</div>
+                    <div className="text-xs text-muted-foreground">{relTime(ev.iso)}</div>
+                    <div className="text-[11px] text-muted-foreground/70">{fmtTime(ev.iso)}</div>
+                  </div>
+                </li>
+              );
+            })}
+          </ol>
+        </section>
+
 
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 pt-2 text-xs text-muted-foreground border-t border-border">
           <span className="flex items-center gap-1.5">
