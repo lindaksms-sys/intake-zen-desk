@@ -92,7 +92,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
-export function CaseDetail({ caseLog, onMarkReviewed, isMarking, onCloseCase, isClosing }: Props) {
+export function CaseDetail({ caseLog, onMarkReviewed, isMarking, onCloseCase, isClosing, onAssign, isAssigning }: Props) {
   if (!caseLog) {
     return (
       <div className="flex h-full flex-col items-center justify-center text-center px-6 py-20">
@@ -110,6 +110,8 @@ export function CaseDetail({ caseLog, onMarkReviewed, isMarking, onCloseCase, is
   const isClosed = status === "closed";
   const reviewedDisabled = status === "reviewed" || isClosed || !!isMarking;
   const closeDisabled = isClosed || !!isClosing;
+  const assignDisabled = isClosed || !!isAssigning;
+  const assignedQueue = caseLog.assigned_to_queue;
   const act = (label: string) =>
     toast.success(label, { description: `Case ${caseLog.session_id ?? caseLog.id}` });
 
