@@ -84,7 +84,7 @@ export function CaseListItem({ caseLog, selected, onSelect }: Props) {
             → {caseLog.recommended_queue ?? "Unassigned"}
           </span>
           <div className="flex items-center gap-1.5 shrink-0">
-            {caseLog.case_status && <StatusChip status={caseLog.case_status} />}
+            <StatusChip status={caseLog.case_status} />
             {caseLog.escalation_required && (
               <span className="inline-flex items-center gap-1 font-medium text-emergency">
                 <AlertTriangle className="h-3 w-3" />
