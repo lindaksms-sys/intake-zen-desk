@@ -1,4 +1,4 @@
-import { AlertTriangle, Clock, CheckCircle2, XCircle } from "lucide-react";
+import { AlertTriangle, Clock, CheckCircle2, XCircle, Circle } from "lucide-react";
 import { UrgencyBadge } from "./UrgencyBadge";
 import { normalizeUrgency } from "@/lib/urgency";
 import type { CaseLog } from "@/lib/supabase";
