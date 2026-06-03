@@ -83,7 +83,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
-export function CaseDetail({ caseLog, onMarkReviewed, isMarking }: Props) {
+export function CaseDetail({ caseLog, onMarkReviewed, isMarking, onCloseCase, isClosing }: Props) {
   if (!caseLog) {
     return (
       <div className="flex h-full flex-col items-center justify-center text-center px-6 py-20">
