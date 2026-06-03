@@ -208,7 +208,7 @@ export const Route = createFileRoute("/api/public/intake")({
         const namePrefix = d.full_name ? `${d.full_name} — ` : "";
         const staff_summary = `[${t.urgency_level}] ${namePrefix}${human_readable_summary}`;
 
-        const { data, error } = await supabase
+        const { error } = await supabase
           .from("agent_case_logs")
           .insert({
             session_id,
@@ -225,9 +225,7 @@ export const Route = createFileRoute("/api/public/intake")({
             patient_message: t.patient_message,
             human_readable_summary,
             case_status: "new",
-          })
-          .select("id, patient_message, urgency_level, recommended_queue")
-          .single();
+          });
 
         if (error) {
           console.error("[intake] insert failed", error);
@@ -238,10 +236,10 @@ export const Route = createFileRoute("/api/public/intake")({
         }
 
         return Response.json({
-          id: data.id,
-          patient_message: data.patient_message,
-          urgency_level: data.urgency_level,
-          recommended_queue: data.recommended_queue,
+          id: session_id,
+          patient_message: t.patient_message,
+          urgency_level: t.urgency_level,
+          recommended_queue: t.recommended_queue,
         });
        } catch (err) {
          console.error("[intake] unhandled error", err);
