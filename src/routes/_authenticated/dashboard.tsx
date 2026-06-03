@@ -335,17 +335,17 @@ function Dashboard() {
           </div>
 
           <div className="mt-5 space-y-2.5">
-            <OpsMetrics cases={allCases} />
-            <StatsCards cases={allCases} />
+            <OpsMetrics cases={allCases} activeKpi={kpiFilter} onSelect={handleKpiSelect} />
+            <StatsCards cases={allCases} activeKpi={kpiFilter} onSelect={handleStatsSelect} />
           </div>
 
           <div className="mt-2 flex gap-1 border-b border-border/60">
             {FILTERS.map((f) => {
-              const active = filter === f.key;
+              const active = !kpiFilter && filter === f.key;
               return (
                 <button
                   key={f.key}
-                  onClick={() => setFilter(f.key)}
+                  onClick={() => handleTabSelect(f.key)}
                   className={`relative px-3 py-2 text-sm transition-colors
                     ${active
                       ? "font-semibold text-foreground"
@@ -360,6 +360,7 @@ function Dashboard() {
               );
             })}
           </div>
+
         </div>
       </header>
 
