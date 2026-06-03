@@ -279,11 +279,31 @@ function IntakePage() {
 
       const res = await fetch("/api/public/intake", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
         body: JSON.stringify(payload),
       });
-      const json = await res.json();
-      if (!res.ok) {
+
+      const contentType = res.headers.get("content-type") ?? "";
+      const isJson = contentType.includes("application/json");
+
+      if (!isJson) {
+        const text = await res.text().catch(() => "");
+        if (import.meta.env.DEV) {
+          console.error("[intake] non-JSON response", res.status, text.slice(0, 500));
+        }
+        throw new Error(
+          "We couldn't reach the intake service. Please try again in a moment.",
+        );
+      }
+
+      const json = (await res.json().catch(() => null)) as
+        | (IntakeResponse & { error?: string })
+        | null;
+
+      if (!res.ok || !json) {
+        if (import.meta.env.DEV) {
+          console.error("[intake] error response", res.status, json);
+        }
         throw new Error(json?.error ?? "Something went wrong. Please try again.");
       }
       setResult(json as IntakeResponse);

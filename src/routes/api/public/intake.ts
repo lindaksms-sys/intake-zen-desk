@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 const IntakeSchema = z.object({
   // Legacy single-message support
@@ -114,6 +115,7 @@ export const Route = createFileRoute("/api/public/intake")({
   server: {
     handlers: {
       POST: async ({ request }) => {
+       try {
         let body: unknown;
         try {
           body = await request.json();
@@ -198,8 +200,6 @@ export const Route = createFileRoute("/api/public/intake")({
 
         const t = triage(triageText);
 
-        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-
         const session_id = crypto.randomUUID();
         const summarySource = d.reason_for_visit || d.details || d.message || message;
         const human_readable_summary =
@@ -242,6 +242,13 @@ export const Route = createFileRoute("/api/public/intake")({
           urgency_level: data.urgency_level,
           recommended_queue: data.recommended_queue,
         });
+       } catch (err) {
+         console.error("[intake] unhandled error", err);
+         return Response.json(
+           { error: "Submission failed. Please try again." },
+           { status: 500 },
+         );
+       }
       },
     },
   },
