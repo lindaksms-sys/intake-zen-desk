@@ -280,6 +280,13 @@ export function CaseDetail({ caseLog, onMarkReviewed, isMarking, onCloseCase, is
               Closed {fmtTime(caseLog.closed_at)}
             </span>
           )}
+          {assignedQueue && (
+            <span className="flex items-center gap-1.5">
+              <UserPlus className="h-3 w-3 text-foreground/60" />
+              Assigned to {queueLabel(assignedQueue)}
+              {caseLog.assigned_at ? ` · ${fmtTime(caseLog.assigned_at)}` : ""}
+            </span>
+          )}
         </div>
       </div>
     </div>
