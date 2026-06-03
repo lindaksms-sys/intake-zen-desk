@@ -22,6 +22,15 @@ interface Props {
   isMarking?: boolean;
   onCloseCase?: (c: CaseLog) => void;
   isClosing?: boolean;
+  onAssign?: (c: CaseLog, queue: "nurse_review" | "front_desk") => void;
+  isAssigning?: boolean;
+}
+
+function queueLabel(q: string | null | undefined): string {
+  if (!q) return "Unassigned";
+  if (q === "nurse_review") return "Nurse review";
+  if (q === "front_desk") return "Front desk";
+  return q.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
 function fmtTime(iso: string) {
@@ -83,7 +92,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
-export function CaseDetail({ caseLog, onMarkReviewed, isMarking, onCloseCase, isClosing }: Props) {
+export function CaseDetail({ caseLog, onMarkReviewed, isMarking, onCloseCase, isClosing, onAssign, isAssigning }: Props) {
   if (!caseLog) {
     return (
       <div className="flex h-full flex-col items-center justify-center text-center px-6 py-20">
@@ -101,6 +110,8 @@ export function CaseDetail({ caseLog, onMarkReviewed, isMarking, onCloseCase, is
   const isClosed = status === "closed";
   const reviewedDisabled = status === "reviewed" || isClosed || !!isMarking;
   const closeDisabled = isClosed || !!isClosing;
+  const assignDisabled = isClosed || !!isAssigning;
+  const assignedQueue = caseLog.assigned_to_queue;
   const act = (label: string) =>
     toast.success(label, { description: `Case ${caseLog.session_id ?? caseLog.id}` });
 
@@ -167,11 +178,23 @@ export function CaseDetail({ caseLog, onMarkReviewed, isMarking, onCloseCase, is
               <CheckCircle2 className="h-4 w-4" />
               {status === "reviewed" ? "Reviewed" : "Mark reviewed"}
             </Button>
-            <Button size="sm" variant="ghost" onClick={() => act("Assigned to nurse")}>
-              <UserPlus className="h-4 w-4" /> Nurse
+            <Button
+              size="sm"
+              variant="ghost"
+              disabled={assignDisabled}
+              onClick={() => onAssign?.(caseLog, "nurse_review")}
+            >
+              <UserPlus className="h-4 w-4" />
+              {assignedQueue === "nurse_review" ? "Nurse ✓" : "Nurse"}
             </Button>
-            <Button size="sm" variant="ghost" onClick={() => act("Assigned to front desk")}>
-              <UserPlus className="h-4 w-4" /> Front desk
+            <Button
+              size="sm"
+              variant="ghost"
+              disabled={assignDisabled}
+              onClick={() => onAssign?.(caseLog, "front_desk")}
+            >
+              <UserPlus className="h-4 w-4" />
+              {assignedQueue === "front_desk" ? "Front desk ✓" : "Front desk"}
             </Button>
             <Button size="sm" variant="ghost" onClick={() => act("Calling patient…")}>
               <Phone className="h-4 w-4" /> Call
@@ -255,6 +278,13 @@ export function CaseDetail({ caseLog, onMarkReviewed, isMarking, onCloseCase, is
             <span className="flex items-center gap-1.5">
               <XCircle className="h-3 w-3 text-muted-foreground" />
               Closed {fmtTime(caseLog.closed_at)}
+            </span>
+          )}
+          {assignedQueue && (
+            <span className="flex items-center gap-1.5">
+              <UserPlus className="h-3 w-3 text-foreground/60" />
+              Assigned to {queueLabel(assignedQueue)}
+              {caseLog.assigned_at ? ` · ${fmtTime(caseLog.assigned_at)}` : ""}
             </span>
           )}
         </div>

@@ -93,6 +93,17 @@ export function CaseListItem({ caseLog, selected, onSelect }: Props) {
             )}
           </div>
         </div>
+        {caseLog.assigned_to_queue && (
+          <div className="mt-1.5 text-[11px] text-muted-foreground/90">
+            <span className="inline-flex items-center gap-1 rounded border border-border bg-muted/60 px-1.5 py-0.5">
+              Assigned · {caseLog.assigned_to_queue === "nurse_review"
+                ? "Nurse review"
+                : caseLog.assigned_to_queue === "front_desk"
+                  ? "Front desk"
+                  : caseLog.assigned_to_queue}
+            </span>
+          </div>
+        )}
       </div>
     </button>
   );
