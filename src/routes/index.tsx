@@ -176,16 +176,16 @@ function Dashboard() {
                   key={(c.id ?? c.session_id ?? idx) as React.Key}
                   caseLog={c}
                   selected={selected ? selected.id === c.id : false}
-                  onSelect={() => setSelectedId(c.id ?? null)}
+                  onSelect={() => handleSelect(c)}
                 />
               ))
             )}
           </section>
 
-          {/* Detail */}
+          {/* Detail — sticky on desktop; mobile uses Sheet below */}
           <section
             aria-label="Case detail"
-            className="rounded-lg border border-border bg-card min-h-[600px]"
+            className="hidden lg:block rounded-lg border border-border bg-card lg:sticky lg:top-6 lg:max-h-[calc(100vh-3rem)] lg:overflow-hidden"
           >
             {isLoading ? (
               <div className="space-y-4 p-6">
