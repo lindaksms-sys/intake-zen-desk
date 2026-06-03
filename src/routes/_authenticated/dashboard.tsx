@@ -388,6 +388,8 @@ function Dashboard() {
                 isMarking={markReviewed.isPending}
                 onCloseCase={(c) => closeCase.mutate(c)}
                 isClosing={closeCase.isPending}
+                onAssign={(c, queue) => assignCase.mutate({ c, queue })}
+                isAssigning={assignCase.isPending}
               />
             )}
           </section>
@@ -403,6 +405,8 @@ function Dashboard() {
             isMarking={markReviewed.isPending}
             onCloseCase={(c) => closeCase.mutate(c)}
             isClosing={closeCase.isPending}
+            onAssign={(c, queue) => assignCase.mutate({ c, queue })}
+            isAssigning={assignCase.isPending}
           />
         </SheetContent>
       </Sheet>
