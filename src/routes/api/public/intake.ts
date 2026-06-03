@@ -181,11 +181,20 @@ export const Route = createFileRoute("/api/public/intake")({
           );
         }
 
-        // Triage runs over the symptom/details text plus the reason
-        const triageText = [d.reason_for_visit, d.details, d.message]
-          .filter(Boolean)
-          .join(" ")
-          .trim() || message;
+        // Triage runs over the symptom/details text plus the reason and
+        // structured conditional signals.
+        const triageHints: string[] = [];
+        if (d.gynae_symptoms?.length) triageHints.push(d.gynae_symptoms.join(" "));
+        if (d.symptom_severity === "severe") triageHints.push("severe pain");
+        if (d.baby_movement_concern) triageHints.push("baby not moving");
+        if (d.bleeding_or_severe_pain) triageHints.push("heavy bleeding severe pain");
+        if (d.reason_category === "admin") triageHints.push("appointment");
+
+        const triageText =
+          [d.reason_for_visit, d.details, d.message, ...triageHints]
+            .filter(Boolean)
+            .join(" ")
+            .trim() || message;
 
         const t = triage(triageText);
 
