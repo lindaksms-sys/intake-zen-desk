@@ -155,8 +155,13 @@ export function CaseDetail({ caseLog, onMarkReviewed, isMarking }: Props) {
       <div className="border-b border-border px-6 py-3">
         <div className="flex flex-wrap items-center gap-2">
           <div className="inline-flex flex-wrap items-center gap-1.5 rounded-lg border border-border bg-card p-1">
-            <Button size="sm" onClick={() => act("Marked as reviewed")}>
-              <CheckCircle2 className="h-4 w-4" /> Mark reviewed
+            <Button
+              size="sm"
+              disabled={reviewedDisabled}
+              onClick={() => onMarkReviewed?.(caseLog)}
+            >
+              <CheckCircle2 className="h-4 w-4" />
+              {status === "reviewed" ? "Reviewed" : "Mark reviewed"}
             </Button>
             <Button size="sm" variant="ghost" onClick={() => act("Assigned to nurse")}>
               <UserPlus className="h-4 w-4" /> Nurse
