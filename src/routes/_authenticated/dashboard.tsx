@@ -375,6 +375,25 @@ function Dashboard() {
         <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(340px,420px)_1fr]">
           {/* Case list */}
           <section aria-label="Case list" className="space-y-2">
+            {kpiFilter && (
+              <div className="flex items-center justify-between rounded-md border border-border/70 bg-foreground/[0.03] px-3 py-1.5">
+                <span className="text-xs text-muted-foreground">
+                  Filtered by:{" "}
+                  <span className="font-medium text-foreground">{KPI_LABEL[kpiFilter]}</span>
+                  <span className="ml-1.5 tabular-nums text-muted-foreground/80">
+                    ({filtered.length})
+                  </span>
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setKpiFilter(null)}
+                  className="inline-flex items-center gap-1 rounded text-xs text-muted-foreground hover:text-foreground cursor-pointer"
+                >
+                  <X className="h-3 w-3" />
+                  Clear
+                </button>
+              </div>
+            )}
             {isLoading ? (
               Array.from({ length: 5 }).map((_, i) => (
                 <Skeleton key={i} className="h-[92px] w-full rounded-lg" />
