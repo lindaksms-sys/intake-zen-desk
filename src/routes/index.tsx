@@ -173,6 +173,18 @@ function Dashboard() {
                   Showing sample data
                 </span>
               )}
+              {import.meta.env.DEV && !isLoading && (
+                <span
+                  className={`rounded-full border px-2.5 py-1 text-[11px] font-mono ${
+                    isError
+                      ? "border-emergency/30 bg-emergency-soft text-emergency"
+                      : "border-border bg-muted text-muted-foreground"
+                  }`}
+                  title={isError ? "Supabase fetch failed" : "Supabase fetch OK"}
+                >
+                  {isError ? "fetch: error" : `fetch: ${liveCases.length} row(s)`}
+                </span>
+              )}
               <div className="relative">
                 <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
                 <Input
