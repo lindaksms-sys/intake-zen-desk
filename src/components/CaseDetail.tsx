@@ -181,9 +181,10 @@ export function CaseDetail({ caseLog, onMarkReviewed, isMarking, onCloseCase, is
             size="sm"
             variant="ghost"
             className="ml-auto text-muted-foreground"
-            onClick={() => act("Case closed")}
+            disabled={closeDisabled}
+            onClick={() => onCloseCase?.(caseLog)}
           >
-            <XCircle className="h-4 w-4" /> Close case
+            <XCircle className="h-4 w-4" /> {isClosed ? "Closed" : "Close case"}
           </Button>
         </div>
       </div>
