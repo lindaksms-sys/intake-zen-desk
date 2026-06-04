@@ -22,7 +22,9 @@ const IntakeSchema = z.object({
   // Legacy single-message support
   message: z.string().trim().min(3).max(2000).optional(),
   contact_channel: z.enum(["chat", "phone", "whatsapp"]).optional().nullable(),
-  age_band: z.enum(["unknown", "teen_20s", "30s_40s", "50s_60s"]).optional().nullable(),
+  age_band: z.string().optional().nullable(),
+  age: z.number().int().min(0).max(120).optional(),
+
 
   // Structured intake fields
   full_name: z.string().trim().min(1).max(120).optional(),
