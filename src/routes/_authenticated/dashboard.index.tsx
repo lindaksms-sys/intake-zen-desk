@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { Search, Activity, RefreshCw, LogOut, X } from "lucide-react";
+import { Search, Activity, RefreshCw, LogOut, X, Users } from "lucide-react";
 import { Toaster } from "@/components/ui/sonner";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -13,17 +13,22 @@ import { StatsCards } from "@/components/StatsCards";
 import { OpsMetrics } from "@/components/OpsMetrics";
 import { CaseListItem } from "@/components/CaseListItem";
 import { KPI_LABEL, matchesKpi, type KpiFilterKey } from "@/lib/kpi-filters";
+import { useCurrentMembership, displayName, type StaffMember } from "@/lib/clinic";
+import { useClinicStaff } from "@/lib/case-assignment";
 
 type FilterKey = "all" | UrgencyKey;
+type ScopeKey = "mine" | "unassigned" | "assigned" | "all";
 
 type DashboardSearch = {
   q?: string;
   filter?: FilterKey;
   kpi?: KpiFilterKey;
+  scope?: ScopeKey;
 };
 
 const ALLOWED_FILTERS: FilterKey[] = ["all", "emergency", "urgent", "routine", "admin"];
 const ALLOWED_KPIS: KpiFilterKey[] = Object.keys(KPI_LABEL) as KpiFilterKey[];
+const ALLOWED_SCOPES: ScopeKey[] = ["mine", "unassigned", "assigned", "all"];
 
 export const Route = createFileRoute("/_authenticated/dashboard/")({
   head: () => ({
