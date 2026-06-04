@@ -161,7 +161,11 @@ export const updateStaffMember = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     const { supabase, userId } = context;
     await assertAdmin(supabase, userId);
-    const patch: Record<string, unknown> = {};
+    const patch: {
+      role?: "clinic_admin" | "staff";
+      full_name?: string | null;
+      job_title?: string | null;
+    } = {};
     if (data.role !== undefined) patch.role = data.role;
     if (data.full_name !== undefined) patch.full_name = data.full_name;
     if (data.job_title !== undefined) patch.job_title = data.job_title;
