@@ -252,8 +252,14 @@ function CaseView() {
             <Chip label="Escalation" value="Not required" className="border-border bg-card" />
           )}
           {assignedQueue && (
-            <Chip icon={UserPlus} label="Assigned" value={queueLabel(assignedQueue)} className="border-border bg-card" />
+            <Chip icon={UserPlus} label="Queue" value={queueLabel(assignedQueue)} className="border-border bg-card" />
           )}
+          <Chip
+            icon={UserPlus}
+            label="Assigned to"
+            value={assigneeMember ? displayName(assigneeMember) : caseLog.assigned_user_id ? "—" : "Unassigned"}
+            className="border-border bg-card"
+          />
         </div>
 
         {/* Actions */}
@@ -262,9 +268,10 @@ function CaseView() {
             <CheckCircle2 className="h-4 w-4" />
             {status === "reviewed" ? "Reviewed" : "Mark reviewed"}
           </Button>
+          <AssignToControl caseLog={caseLog} canReassign={canReassign} />
           <Button size="sm" variant="ghost" disabled={assignDisabled} onClick={() => assignCase.mutate({ c: caseLog, queue: "nurse_review" })}>
             <UserPlus className="h-4 w-4" />
-            {assignedQueue === "nurse_review" ? "Nurse ✓" : "Nurse"}
+            {assignedQueue === "nurse_review" ? "Nurse queue ✓" : "Nurse queue"}
           </Button>
           <Button size="sm" variant="ghost" disabled={assignDisabled} onClick={() => assignCase.mutate({ c: caseLog, queue: "front_desk" })}>
             <UserPlus className="h-4 w-4" />
