@@ -230,6 +230,9 @@ function Dashboard() {
                 </button>
               );
             })}
+          </div>
+
+
 
           <div className="mt-5 space-y-2.5">
             <OpsMetrics cases={allCases} activeKpi={kpiFilter} onSelect={handleKpiSelect} />
