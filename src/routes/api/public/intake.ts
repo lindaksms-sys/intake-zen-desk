@@ -136,12 +136,12 @@ export const Route = createFileRoute("/api/public/intake")({
         try {
           body = await request.json();
         } catch {
-          return Response.json({ error: "Invalid JSON" }, { status: 400 });
+          return jsonResponse({ error: "Invalid JSON" }, 400);
         }
 
         const parsed = IntakeSchema.safeParse(body);
         if (!parsed.success) {
-          return Response.json(
+          return jsonResponse(
             { error: "Invalid input", details: parsed.error.flatten() },
             { status: 400 },
           );
@@ -193,7 +193,7 @@ export const Route = createFileRoute("/api/public/intake")({
             : d.message ?? "";
 
         if (message.trim().length < 3) {
-          return Response.json(
+          return jsonResponse(
             { error: "Please describe the reason for your visit." },
             { status: 400 },
           );
@@ -244,13 +244,13 @@ export const Route = createFileRoute("/api/public/intake")({
 
         if (error) {
           console.error("[intake] insert failed", error);
-          return Response.json(
+          return jsonResponse(
             { error: "Could not save your message. Please try again." },
             { status: 500 },
           );
         }
 
-        return Response.json({
+        return jsonResponse({
           id: session_id,
           patient_message: t.patient_message,
           urgency_level: t.urgency_level,
@@ -258,7 +258,7 @@ export const Route = createFileRoute("/api/public/intake")({
         });
        } catch (err) {
          console.error("[intake] unhandled error", err);
-         return Response.json(
+         return jsonResponse(
            { error: "Submission failed. Please try again." },
            { status: 500 },
          );
