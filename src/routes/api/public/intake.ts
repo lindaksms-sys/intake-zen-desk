@@ -130,7 +130,9 @@ function triage(message: string) {
 export const Route = createFileRoute("/api/public/intake")({
   server: {
     handlers: {
+      OPTIONS: async () => new Response(null, { status: 204, headers: CORS_HEADERS }),
       POST: async ({ request }) => {
+
        try {
         let body: unknown;
         try {
