@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IntakeRouteImport } from './routes/intake'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AcceptInviteRouteImport } from './routes/accept-invite'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
@@ -27,6 +28,11 @@ const IntakeRoute = IntakeRouteImport.update({
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AcceptInviteRoute = AcceptInviteRouteImport.update({
+  id: '/accept-invite',
+  path: '/accept-invite',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
@@ -69,6 +75,7 @@ const AuthenticatedDashboardCasesIdRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/accept-invite': typeof AcceptInviteRoute
   '/auth': typeof AuthRoute
   '/intake': typeof IntakeRoute
   '/dashboard': typeof AuthenticatedDashboardRouteWithChildren
@@ -79,6 +86,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/accept-invite': typeof AcceptInviteRoute
   '/auth': typeof AuthRoute
   '/intake': typeof IntakeRoute
   '/dashboard/staff': typeof AuthenticatedDashboardStaffRoute
@@ -90,6 +98,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/accept-invite': typeof AcceptInviteRoute
   '/auth': typeof AuthRoute
   '/intake': typeof IntakeRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRouteWithChildren
@@ -102,6 +111,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/accept-invite'
     | '/auth'
     | '/intake'
     | '/dashboard'
@@ -112,6 +122,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/accept-invite'
     | '/auth'
     | '/intake'
     | '/dashboard/staff'
@@ -122,6 +133,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_authenticated'
+    | '/accept-invite'
     | '/auth'
     | '/intake'
     | '/_authenticated/dashboard'
@@ -134,6 +146,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  AcceptInviteRoute: typeof AcceptInviteRoute
   AuthRoute: typeof AuthRoute
   IntakeRoute: typeof IntakeRoute
   ApiPublicIntakeRoute: typeof ApiPublicIntakeRoute
@@ -153,6 +166,13 @@ declare module '@tanstack/react-router' {
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/accept-invite': {
+      id: '/accept-invite'
+      path: '/accept-invite'
+      fullPath: '/accept-invite'
+      preLoaderRoute: typeof AcceptInviteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated': {
@@ -239,6 +259,7 @@ const AuthenticatedRouteRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  AcceptInviteRoute: AcceptInviteRoute,
   AuthRoute: AuthRoute,
   IntakeRoute: IntakeRoute,
   ApiPublicIntakeRoute: ApiPublicIntakeRoute,
