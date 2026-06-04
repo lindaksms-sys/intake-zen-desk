@@ -123,7 +123,8 @@ export const inviteStaffMember = createServerFn({ method: "POST" })
 
     // Resolve the site URL for the invite redirect. Production must always
     // route to the live domain; localhost is only used in local dev.
-    const siteUrl = process.env.PUBLIC_SITE_URL || process.env.SITE_URL || "https://copilot.creativehauz.space";
+    const siteUrl =
+      process.env.PUBLIC_SITE_URL || process.env.SITE_URL || "https://copilot.creativehauz.space";
     const redirectTo = `${siteUrl.replace(/\/$/, "")}/accept-invite`;
 
     // Try invite first
