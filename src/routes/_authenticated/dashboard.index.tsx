@@ -123,13 +123,23 @@ function Dashboard() {
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return allCases.filter((c) => {
+      if (scope === "mine" && c.assigned_user_id !== myUserId) return false;
+      if (scope === "unassigned" && c.assigned_user_id) return false;
+      if (scope === "assigned" && !c.assigned_user_id) return false;
       if (kpiFilter && !matchesKpi(c, kpiFilter)) return false;
       if (filter !== "all" && normalizeUrgency(c.urgency_level) !== filter) return false;
       if (!q) return true;
       return [c.user_message, c.staff_summary, c.reason_for_visit]
         .some((f) => (f ?? "").toLowerCase().includes(q));
     });
-  }, [allCases, filter, kpiFilter, query]);
+  }, [allCases, filter, kpiFilter, query, scope, myUserId]);
+
+  const SCOPES: { key: ScopeKey; label: string; show: boolean }[] = [
+    { key: "mine", label: "My cases", show: true },
+    { key: "unassigned", label: "Unassigned", show: true },
+    { key: "assigned", label: "Assigned", show: isAdmin },
+    { key: "all", label: "All", show: isAdmin },
+  ];
 
   const handleSelect = (c: CaseLog) => {
     if (c.id == null) return;
