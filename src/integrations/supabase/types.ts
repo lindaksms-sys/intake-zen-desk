@@ -18,7 +18,10 @@ export type Database = {
         Row: {
           age_band: string | null
           assigned_at: string | null
+          assigned_by_user_id: string | null
           assigned_to_queue: string | null
+          assigned_user_id: string | null
+          business_id: string
           case_status: string | null
           closed_at: string | null
           contact_channel: string | null
@@ -41,7 +44,10 @@ export type Database = {
         Insert: {
           age_band?: string | null
           assigned_at?: string | null
+          assigned_by_user_id?: string | null
           assigned_to_queue?: string | null
+          assigned_user_id?: string | null
+          business_id?: string
           case_status?: string | null
           closed_at?: string | null
           contact_channel?: string | null
@@ -64,7 +70,10 @@ export type Database = {
         Update: {
           age_band?: string | null
           assigned_at?: string | null
+          assigned_by_user_id?: string | null
           assigned_to_queue?: string | null
+          assigned_user_id?: string | null
+          business_id?: string
           case_status?: string | null
           closed_at?: string | null
           contact_channel?: string | null
@@ -84,14 +93,85 @@ export type Database = {
           urgency_level?: string | null
           user_message?: string
         }
+        Relationships: [
+          {
+            foreignKeyName: "agent_case_logs_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      businesses: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          slug?: string
+          updated_at?: string
+        }
         Relationships: []
+      }
+      clinic_memberships: {
+        Row: {
+          business_id: string
+          created_at: string
+          full_name: string | null
+          id: string
+          job_title: string | null
+          role: string
+          user_id: string
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          job_title?: string | null
+          role: string
+          user_id: string
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          job_title?: string | null
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clinic_memberships_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_clinic_admin: { Args: { business_uuid: string }; Returns: boolean }
+      is_clinic_member: { Args: { business_uuid: string }; Returns: boolean }
     }
     Enums: {
       [_ in never]: never
