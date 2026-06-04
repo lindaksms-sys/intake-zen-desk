@@ -145,7 +145,7 @@ export const Route = createFileRoute("/api/public/intake")({
         if (!parsed.success) {
           return jsonResponse(
             { error: "Invalid input", details: parsed.error.flatten() },
-            { status: 400 },
+            400,
           );
         }
 
@@ -197,7 +197,7 @@ export const Route = createFileRoute("/api/public/intake")({
         if (message.trim().length < 3) {
           return jsonResponse(
             { error: "Please describe the reason for your visit." },
-            { status: 400 },
+            400,
           );
         }
 
@@ -248,7 +248,7 @@ export const Route = createFileRoute("/api/public/intake")({
           console.error("[intake] insert failed", error);
           return jsonResponse(
             { error: "Could not save your message. Please try again." },
-            { status: 500 },
+            500,
           );
         }
 
@@ -262,7 +262,7 @@ export const Route = createFileRoute("/api/public/intake")({
          console.error("[intake] unhandled error", err);
          return jsonResponse(
            { error: "Submission failed. Please try again." },
-           { status: 500 },
+           500,
          );
        }
       },
