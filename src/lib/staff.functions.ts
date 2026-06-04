@@ -123,10 +123,7 @@ export const inviteStaffMember = createServerFn({ method: "POST" })
 
     // Resolve the site URL for the invite redirect. Production must always
     // route to the live domain; localhost is only used in local dev.
-    const siteUrl =
-      process.env.PUBLIC_SITE_URL ||
-      process.env.SITE_URL ||
-      "https://copilot.creativehauz.space";
+    const siteUrl = process.env.PUBLIC_SITE_URL || process.env.SITE_URL || "https://copilot.creativehauz.space";
     const redirectTo = `${siteUrl.replace(/\/$/, "")}/accept-invite`;
 
     // Try invite first
@@ -144,9 +141,14 @@ export const inviteStaffMember = createServerFn({ method: "POST" })
       if (msg.includes("already") || msg.includes("registered") || msg.includes("exists")) {
         let page = 1;
         while (!targetUserId && page <= 20) {
-          const { data: list, error: lerr } = await supabaseAdmin.auth.admin.listUsers({ page, perPage: 200 });
+          const { data: list, error: lerr } = await supabaseAdmin.auth.admin.listUsers({
+            page,
+            perPage: 200,
+          });
           if (lerr) throw new Error(lerr.message);
-          const found = list.users.find((u) => (u.email ?? "").toLowerCase() === data.email.toLowerCase());
+          const found = list.users.find(
+            (u) => (u.email ?? "").toLowerCase() === data.email.toLowerCase(),
+          );
           if (found) targetUserId = found.id;
           if (list.users.length < 200) break;
           page += 1;
@@ -161,18 +163,16 @@ export const inviteStaffMember = createServerFn({ method: "POST" })
 
     if (!targetUserId) throw new Error("Could not resolve user id");
 
-    const { error: upErr } = await supabaseAdmin
-      .from("clinic_memberships")
-      .upsert(
-        {
-          business_id: DEFAULT_BUSINESS_ID,
-          user_id: targetUserId,
-          role: data.role,
-          full_name: data.full_name ?? null,
-          job_title: data.job_title ?? null,
-        },
-        { onConflict: "business_id,user_id" },
-      );
+    const { error: upErr } = await supabaseAdmin.from("clinic_memberships").upsert(
+      {
+        business_id: DEFAULT_BUSINESS_ID,
+        user_id: targetUserId,
+        role: data.role,
+        full_name: data.full_name ?? null,
+        job_title: data.job_title ?? null,
+      },
+      { onConflict: "business_id,user_id" },
+    );
     if (upErr) throw new Error(upErr.message);
 
     return { ok: true, user_id: targetUserId };
