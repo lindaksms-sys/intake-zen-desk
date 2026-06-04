@@ -113,7 +113,10 @@ export const inviteStaffMember = createServerFn({ method: "POST" })
     // Try invite first
     const { data: invited, error: invErr } = await supabaseAdmin.auth.admin.inviteUserByEmail(
       data.email,
-      { data: { full_name: data.full_name ?? null }, redirectTo },
+      {
+        data: { full_name: data.full_name ?? null, needs_password: true },
+        redirectTo,
+      },
     );
 
     if (invErr) {
