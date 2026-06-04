@@ -13,7 +13,7 @@ import { StatsCards } from "@/components/StatsCards";
 import { OpsMetrics } from "@/components/OpsMetrics";
 import { CaseListItem } from "@/components/CaseListItem";
 import { KPI_LABEL, matchesKpi, type KpiFilterKey } from "@/lib/kpi-filters";
-import { useCurrentMembership, displayName, type StaffMember } from "@/lib/clinic";
+import { useCurrentMembership, type StaffMember } from "@/lib/clinic";
 import { useClinicStaff } from "@/lib/case-assignment";
 
 type FilterKey = "all" | UrgencyKey;
