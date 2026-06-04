@@ -56,23 +56,27 @@ export const listClinicStaff = createServerFn({ method: "GET" })
       openCount.set(k, (openCount.get(k) ?? 0) + 1);
     }
 
-    // Fetch emails via admin
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const userIds = (memberships ?? []).map((m: any) => m.user_id as string);
     const emailById = new Map<string, { email: string | null; last_sign_in_at: string | null }>();
-    // Page through admin.listUsers
-    let page = 1;
-    while (true) {
-      const { data, error: lerr } = await supabaseAdmin.auth.admin.listUsers({ page, perPage: 200 });
-      if (lerr) throw new Error(lerr.message);
-      for (const u of data.users) {
-        if (userIds.includes(u.id)) {
-          emailById.set(u.id, { email: u.email ?? null, last_sign_in_at: u.last_sign_in_at ?? null });
+
+    // Fetch emails via admin, but never let an auth-admin lookup break the staff UI.
+    try {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      let page = 1;
+      while (true) {
+        const { data, error: lerr } = await supabaseAdmin.auth.admin.listUsers({ page, perPage: 200 });
+        if (lerr) throw new Error(lerr.message);
+        for (const u of data.users) {
+          if (userIds.includes(u.id)) {
+            emailById.set(u.id, { email: u.email ?? null, last_sign_in_at: u.last_sign_in_at ?? null });
+          }
         }
+        if (data.users.length < 200) break;
+        page += 1;
+        if (page > 20) break;
       }
-      if (data.users.length < 200) break;
-      page += 1;
-      if (page > 20) break;
+    } catch (error) {
+      console.warn("Staff email lookup failed; rendering memberships without auth emails.", error);
     }
 
     return (memberships ?? []).map((m: any) => ({
