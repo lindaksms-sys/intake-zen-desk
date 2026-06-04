@@ -96,15 +96,23 @@ export function CaseListItem({ caseLog, selected, onSelect, staffById }: Props) 
             )}
           </div>
         </div>
-        {caseLog.assigned_to_queue && (
-          <div className="mt-1.5 text-[11px] text-muted-foreground/90">
-            <span className="inline-flex items-center gap-1 rounded border border-border bg-muted/60 px-1.5 py-0.5">
-              Assigned · {caseLog.assigned_to_queue === "nurse_review"
-                ? "Nurse review"
-                : caseLog.assigned_to_queue === "front_desk"
-                  ? "Front desk"
-                  : caseLog.assigned_to_queue}
-            </span>
+        {(assignee || caseLog.assigned_to_queue) && (
+          <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-[11px] text-muted-foreground/90">
+            {assignee && (
+              <span className="inline-flex items-center gap-1 rounded border border-border bg-muted/60 px-1.5 py-0.5">
+                <UserCheck className="h-3 w-3" />
+                {displayName(assignee)}
+              </span>
+            )}
+            {caseLog.assigned_to_queue && !assignee && (
+              <span className="inline-flex items-center gap-1 rounded border border-border bg-muted/60 px-1.5 py-0.5">
+                Queue · {caseLog.assigned_to_queue === "nurse_review"
+                  ? "Nurse review"
+                  : caseLog.assigned_to_queue === "front_desk"
+                    ? "Front desk"
+                    : caseLog.assigned_to_queue}
+              </span>
+            )}
           </div>
         )}
       </div>
