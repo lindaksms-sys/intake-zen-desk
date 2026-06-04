@@ -13,6 +13,9 @@ import { UrgencyBadge } from "@/components/UrgencyBadge";
 import { supabase, type CaseLog } from "@/lib/supabase";
 import { SAMPLE_CASES } from "@/lib/sample-cases";
 import { useCaseMutations } from "@/lib/case-mutations";
+import { AssignToControl } from "@/components/AssignToControl";
+import { useCurrentMembership, displayName } from "@/lib/clinic";
+import { useClinicStaff } from "@/lib/case-assignment";
 
 export const Route = createFileRoute("/_authenticated/dashboard/cases/$id")({
   head: () => ({ meta: [{ title: "Case — Clinic Intake Copilot" }] }),
