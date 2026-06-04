@@ -129,6 +129,35 @@ function triage(message: string) {
   };
 }
 
+function ageToBand(age: number | null | undefined): string | null {
+  if (age == null || !Number.isFinite(age)) return null;
+  if (age >= 13 && age <= 29) return "teen_or_20s";
+  if (age >= 30 && age <= 49) return "30s_or_40s";
+  if (age >= 50 && age <= 69) return "50s_or_60s";
+  return "unknown";
+}
+
+function parseAgeOrDob(input: string | null | undefined): number | null {
+  if (!input) return null;
+  const s = input.trim();
+  if (!s) return null;
+  // Plain number?
+  if (/^\d{1,3}$/.test(s)) {
+    const n = parseInt(s, 10);
+    return n >= 0 && n <= 120 ? n : null;
+  }
+  // Try date parse (YYYY-MM-DD, MM/DD/YYYY, etc.)
+  const d = new Date(s);
+  if (!isNaN(d.getTime())) {
+    const now = new Date();
+    let age = now.getFullYear() - d.getFullYear();
+    const m = now.getMonth() - d.getMonth();
+    if (m < 0 || (m === 0 && now.getDate() < d.getDate())) age--;
+    return age >= 0 && age <= 120 ? age : null;
+  }
+  return null;
+}
+
 export const Route = createFileRoute("/api/public/intake")({
   server: {
     handlers: {
