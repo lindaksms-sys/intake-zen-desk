@@ -45,8 +45,9 @@ function StatusChip({ status }: { status: string | null | undefined }) {
   );
 }
 
-export function CaseListItem({ caseLog, selected, onSelect }: Props) {
+export function CaseListItem({ caseLog, selected, onSelect, staffById }: Props) {
   const key = normalizeUrgency(caseLog.urgency_level);
+  const assignee = caseLog.assigned_user_id ? staffById?.get(caseLog.assigned_user_id) ?? null : null;
   const railColor =
     key === "emergency" ? "bg-emergency"
     : key === "urgent" ? "bg-urgent"
