@@ -1,12 +1,14 @@
-import { AlertTriangle, Clock, CheckCircle2, XCircle, Circle } from "lucide-react";
+import { AlertTriangle, Clock, CheckCircle2, XCircle, Circle, UserCheck } from "lucide-react";
 import { UrgencyBadge } from "./UrgencyBadge";
 import { normalizeUrgency } from "@/lib/urgency";
 import type { CaseLog } from "@/lib/supabase";
+import { displayName, type StaffMember } from "@/lib/clinic";
 
 interface Props {
   caseLog: CaseLog;
   selected: boolean;
   onSelect: () => void;
+  staffById?: Map<string, StaffMember>;
 }
 
 function timeAgo(iso: string): string {
