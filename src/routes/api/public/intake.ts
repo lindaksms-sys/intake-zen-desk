@@ -22,7 +22,9 @@ const IntakeSchema = z.object({
   // Legacy single-message support
   message: z.string().trim().min(3).max(2000).optional(),
   contact_channel: z.enum(["chat", "phone", "whatsapp"]).optional().nullable(),
-  age_band: z.enum(["unknown", "teen_20s", "30s_40s", "50s_60s"]).optional().nullable(),
+  age_band: z.string().optional().nullable(),
+  age: z.number().int().min(0).max(120).optional(),
+
 
   // Structured intake fields
   full_name: z.string().trim().min(1).max(120).optional(),
@@ -125,6 +127,35 @@ function triage(message: string) {
     next_action,
     patient_message,
   };
+}
+
+function ageToBand(age: number | null | undefined): string | null {
+  if (age == null || !Number.isFinite(age)) return null;
+  if (age >= 13 && age <= 29) return "teen_or_20s";
+  if (age >= 30 && age <= 49) return "30s_or_40s";
+  if (age >= 50 && age <= 69) return "50s_or_60s";
+  return "unknown";
+}
+
+function parseAgeOrDob(input: string | null | undefined): number | null {
+  if (!input) return null;
+  const s = input.trim();
+  if (!s) return null;
+  // Plain number?
+  if (/^\d{1,3}$/.test(s)) {
+    const n = parseInt(s, 10);
+    return n >= 0 && n <= 120 ? n : null;
+  }
+  // Try date parse (YYYY-MM-DD, MM/DD/YYYY, etc.)
+  const d = new Date(s);
+  if (!isNaN(d.getTime())) {
+    const now = new Date();
+    let age = now.getFullYear() - d.getFullYear();
+    const m = now.getMonth() - d.getMonth();
+    if (m < 0 || (m === 0 && now.getDate() < d.getDate())) age--;
+    return age >= 0 && age <= 120 ? age : null;
+  }
+  return null;
 }
 
 export const Route = createFileRoute("/api/public/intake")({
@@ -230,7 +261,7 @@ export const Route = createFileRoute("/api/public/intake")({
           .insert({
             session_id,
             user_message: message,
-            age_band: d.age_band ?? null,
+            age_band: ageToBand(d.age ?? parseAgeOrDob(d.age_or_dob)) ?? d.age_band ?? null,
             contact_channel: d.contact_channel ?? null,
             reason_for_visit: d.reason_for_visit ?? null,
             urgency_level: t.urgency_level,
