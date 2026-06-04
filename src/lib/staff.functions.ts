@@ -1,10 +1,18 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import type { Database } from "@/integrations/supabase/types";
 
 const DEFAULT_BUSINESS_ID = "00000000-0000-0000-0000-000000000001";
 
-async function assertAdmin(supabase: any, userId: string) {
+type ClinicMembershipRow = Database["public"]["Tables"]["clinic_memberships"]["Row"];
+type CaseAssignmentRow = Pick<
+  Database["public"]["Tables"]["agent_case_logs"]["Row"],
+  "assigned_user_id" | "case_status"
+>;
+
+async function assertAdmin(supabase: SupabaseClient<Database>, userId: string) {
   const { data, error } = await supabase
     .from("clinic_memberships")
     .select("role")
@@ -49,14 +57,15 @@ export const listClinicStaff = createServerFn({ method: "GET" })
     if (ocErr) throw new Error(ocErr.message);
 
     const openCount = new Map<string, number>();
-    for (const c of (openCases ?? []) as any[]) {
+    for (const c of (openCases ?? []) as CaseAssignmentRow[]) {
       const s = (c.case_status ?? "new").toLowerCase();
       if (s === "closed") continue;
       const k = c.assigned_user_id as string;
       openCount.set(k, (openCount.get(k) ?? 0) + 1);
     }
 
-    const userIds = (memberships ?? []).map((m: any) => m.user_id as string);
+    const membershipRows = (memberships ?? []) as ClinicMembershipRow[];
+    const userIds = membershipRows.map((m) => m.user_id);
     const emailById = new Map<string, { email: string | null; last_sign_in_at: string | null }>();
 
     // Fetch emails via admin, but never let an auth-admin lookup break the staff UI.
@@ -64,11 +73,17 @@ export const listClinicStaff = createServerFn({ method: "GET" })
       const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
       let page = 1;
       while (true) {
-        const { data, error: lerr } = await supabaseAdmin.auth.admin.listUsers({ page, perPage: 200 });
+        const { data, error: lerr } = await supabaseAdmin.auth.admin.listUsers({
+          page,
+          perPage: 200,
+        });
         if (lerr) throw new Error(lerr.message);
         for (const u of data.users) {
           if (userIds.includes(u.id)) {
-            emailById.set(u.id, { email: u.email ?? null, last_sign_in_at: u.last_sign_in_at ?? null });
+            emailById.set(u.id, {
+              email: u.email ?? null,
+              last_sign_in_at: u.last_sign_in_at ?? null,
+            });
           }
         }
         if (data.users.length < 200) break;
@@ -79,7 +94,7 @@ export const listClinicStaff = createServerFn({ method: "GET" })
       console.warn("Staff email lookup failed; rendering memberships without auth emails.", error);
     }
 
-    return (memberships ?? []).map((m: any) => ({
+    return membershipRows.map((m) => ({
       ...m,
       email: emailById.get(m.user_id)?.email ?? null,
       last_sign_in_at: emailById.get(m.user_id)?.last_sign_in_at ?? null,
