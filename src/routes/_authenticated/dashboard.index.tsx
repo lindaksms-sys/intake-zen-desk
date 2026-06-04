@@ -46,6 +46,9 @@ export const Route = createFileRoute("/_authenticated/dashboard/")({
     if (typeof raw.kpi === "string" && (ALLOWED_KPIS as string[]).includes(raw.kpi)) {
       out.kpi = raw.kpi as KpiFilterKey;
     }
+    if (typeof raw.scope === "string" && (ALLOWED_SCOPES as string[]).includes(raw.scope)) {
+      out.scope = raw.scope as ScopeKey;
+    }
     return out;
   },
   component: Dashboard,
