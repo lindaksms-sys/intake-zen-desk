@@ -79,6 +79,19 @@ function Dashboard() {
   const kpiFilter: KpiFilterKey | null = search.kpi ?? null;
   const query = search.q ?? "";
 
+  const me = useCurrentMembership();
+  const isAdmin = me.data?.role === "clinic_admin";
+  const myUserId = me.data?.user_id ?? null;
+  const defaultScope: ScopeKey = isAdmin ? "all" : "mine";
+  const scope: ScopeKey = search.scope ?? defaultScope;
+
+  const staff = useClinicStaff();
+  const staffById = useMemo(() => {
+    const m = new Map<string, StaffMember>();
+    for (const s of staff.data ?? []) m.set(s.user_id, s);
+    return m;
+  }, [staff.data]);
+
   const [queryDraft, setQueryDraft] = useState(query);
   const queryClient = useQueryClient();
 
@@ -89,6 +102,7 @@ function Dashboard() {
         if (!next.q) delete next.q;
         if (!next.filter || next.filter === "all") delete next.filter;
         if (!next.kpi) delete next.kpi;
+        if (!next.scope || next.scope === defaultScope) delete next.scope;
         return next;
       },
       replace: true,
@@ -100,6 +114,7 @@ function Dashboard() {
     queryFn: fetchCases,
     refetchOnWindowFocus: false,
   });
+
 
   const liveCases = data ?? [];
   const usingSample = !isLoading && !isError && liveCases.length === 0;
