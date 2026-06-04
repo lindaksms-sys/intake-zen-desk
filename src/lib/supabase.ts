@@ -8,6 +8,7 @@ export type CaseStatus = "new" | "reviewed" | "in_progress" | "closed" | string;
 
 export interface CaseLog {
   id?: string | number;
+  business_id?: string | null;
   session_id: string | null;
   user_message: string | null;
   age_band: string | null;
@@ -28,4 +29,6 @@ export interface CaseLog {
   updated_at?: string | null;
   assigned_to_queue?: string | null;
   assigned_at?: string | null;
+  assigned_user_id?: string | null;
+  assigned_by_user_id?: string | null;
 }
