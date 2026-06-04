@@ -39,7 +39,10 @@ function AcceptInvitePage() {
     if (password !== confirm) return toast.error("Passwords do not match");
     setSubmitting(true);
     try {
-      const { error } = await supabase.auth.updateUser({ password });
+      const { error } = await supabase.auth.updateUser({
+        password,
+        data: { needs_password: false },
+      });
       if (error) throw error;
       toast.success("Password set. Welcome!");
       navigate({ to: "/dashboard", replace: true });
