@@ -1,12 +1,14 @@
-import { AlertTriangle, Clock, CheckCircle2, XCircle, Circle } from "lucide-react";
+import { AlertTriangle, Clock, CheckCircle2, XCircle, Circle, UserCheck } from "lucide-react";
 import { UrgencyBadge } from "./UrgencyBadge";
 import { normalizeUrgency } from "@/lib/urgency";
 import type { CaseLog } from "@/lib/supabase";
+import { displayName, type StaffMember } from "@/lib/clinic";
 
 interface Props {
   caseLog: CaseLog;
   selected: boolean;
   onSelect: () => void;
+  staffById?: Map<string, StaffMember>;
 }
 
 function timeAgo(iso: string): string {
@@ -43,8 +45,9 @@ function StatusChip({ status }: { status: string | null | undefined }) {
   );
 }
 
-export function CaseListItem({ caseLog, selected, onSelect }: Props) {
+export function CaseListItem({ caseLog, selected, onSelect, staffById }: Props) {
   const key = normalizeUrgency(caseLog.urgency_level);
+  const assignee = caseLog.assigned_user_id ? staffById?.get(caseLog.assigned_user_id) ?? null : null;
   const railColor =
     key === "emergency" ? "bg-emergency"
     : key === "urgent" ? "bg-urgent"
@@ -93,15 +96,23 @@ export function CaseListItem({ caseLog, selected, onSelect }: Props) {
             )}
           </div>
         </div>
-        {caseLog.assigned_to_queue && (
-          <div className="mt-1.5 text-[11px] text-muted-foreground/90">
-            <span className="inline-flex items-center gap-1 rounded border border-border bg-muted/60 px-1.5 py-0.5">
-              Assigned · {caseLog.assigned_to_queue === "nurse_review"
-                ? "Nurse review"
-                : caseLog.assigned_to_queue === "front_desk"
-                  ? "Front desk"
-                  : caseLog.assigned_to_queue}
-            </span>
+        {(assignee || caseLog.assigned_to_queue) && (
+          <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-[11px] text-muted-foreground/90">
+            {assignee && (
+              <span className="inline-flex items-center gap-1 rounded border border-border bg-muted/60 px-1.5 py-0.5">
+                <UserCheck className="h-3 w-3" />
+                {displayName(assignee)}
+              </span>
+            )}
+            {caseLog.assigned_to_queue && !assignee && (
+              <span className="inline-flex items-center gap-1 rounded border border-border bg-muted/60 px-1.5 py-0.5">
+                Queue · {caseLog.assigned_to_queue === "nurse_review"
+                  ? "Nurse review"
+                  : caseLog.assigned_to_queue === "front_desk"
+                    ? "Front desk"
+                    : caseLog.assigned_to_queue}
+              </span>
+            )}
           </div>
         )}
       </div>

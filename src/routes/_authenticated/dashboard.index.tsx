@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { Search, Activity, RefreshCw, LogOut, X } from "lucide-react";
+import { Search, Activity, RefreshCw, LogOut, X, Users } from "lucide-react";
 import { Toaster } from "@/components/ui/sonner";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -13,17 +13,22 @@ import { StatsCards } from "@/components/StatsCards";
 import { OpsMetrics } from "@/components/OpsMetrics";
 import { CaseListItem } from "@/components/CaseListItem";
 import { KPI_LABEL, matchesKpi, type KpiFilterKey } from "@/lib/kpi-filters";
+import { useCurrentMembership, type StaffMember } from "@/lib/clinic";
+import { useClinicStaff } from "@/lib/case-assignment";
 
 type FilterKey = "all" | UrgencyKey;
+type ScopeKey = "mine" | "unassigned" | "assigned" | "all";
 
 type DashboardSearch = {
   q?: string;
   filter?: FilterKey;
   kpi?: KpiFilterKey;
+  scope?: ScopeKey;
 };
 
 const ALLOWED_FILTERS: FilterKey[] = ["all", "emergency", "urgent", "routine", "admin"];
 const ALLOWED_KPIS: KpiFilterKey[] = Object.keys(KPI_LABEL) as KpiFilterKey[];
+const ALLOWED_SCOPES: ScopeKey[] = ["mine", "unassigned", "assigned", "all"];
 
 export const Route = createFileRoute("/_authenticated/dashboard/")({
   head: () => ({
@@ -40,6 +45,9 @@ export const Route = createFileRoute("/_authenticated/dashboard/")({
     }
     if (typeof raw.kpi === "string" && (ALLOWED_KPIS as string[]).includes(raw.kpi)) {
       out.kpi = raw.kpi as KpiFilterKey;
+    }
+    if (typeof raw.scope === "string" && (ALLOWED_SCOPES as string[]).includes(raw.scope)) {
+      out.scope = raw.scope as ScopeKey;
     }
     return out;
   },
@@ -71,6 +79,19 @@ function Dashboard() {
   const kpiFilter: KpiFilterKey | null = search.kpi ?? null;
   const query = search.q ?? "";
 
+  const me = useCurrentMembership();
+  const isAdmin = me.data?.role === "clinic_admin";
+  const myUserId = me.data?.user_id ?? null;
+  const defaultScope: ScopeKey = isAdmin ? "all" : "mine";
+  const scope: ScopeKey = search.scope ?? defaultScope;
+
+  const staff = useClinicStaff();
+  const staffById = useMemo(() => {
+    const m = new Map<string, StaffMember>();
+    for (const s of staff.data ?? []) m.set(s.user_id, s);
+    return m;
+  }, [staff.data]);
+
   const [queryDraft, setQueryDraft] = useState(query);
   const queryClient = useQueryClient();
 
@@ -81,6 +102,7 @@ function Dashboard() {
         if (!next.q) delete next.q;
         if (!next.filter || next.filter === "all") delete next.filter;
         if (!next.kpi) delete next.kpi;
+        if (!next.scope || next.scope === defaultScope) delete next.scope;
         return next;
       },
       replace: true,
@@ -93,6 +115,7 @@ function Dashboard() {
     refetchOnWindowFocus: false,
   });
 
+
   const liveCases = data ?? [];
   const usingSample = !isLoading && !isError && liveCases.length === 0;
   const allCases = liveCases.length > 0 ? liveCases : SAMPLE_CASES;
@@ -100,13 +123,23 @@ function Dashboard() {
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return allCases.filter((c) => {
+      if (scope === "mine" && c.assigned_user_id !== myUserId) return false;
+      if (scope === "unassigned" && c.assigned_user_id) return false;
+      if (scope === "assigned" && !c.assigned_user_id) return false;
       if (kpiFilter && !matchesKpi(c, kpiFilter)) return false;
       if (filter !== "all" && normalizeUrgency(c.urgency_level) !== filter) return false;
       if (!q) return true;
       return [c.user_message, c.staff_summary, c.reason_for_visit]
         .some((f) => (f ?? "").toLowerCase().includes(q));
     });
-  }, [allCases, filter, kpiFilter, query]);
+  }, [allCases, filter, kpiFilter, query, scope, myUserId]);
+
+  const SCOPES: { key: ScopeKey; label: string; show: boolean }[] = [
+    { key: "mine", label: "My cases", show: true },
+    { key: "unassigned", label: "Unassigned", show: true },
+    { key: "assigned", label: "Assigned", show: isAdmin },
+    { key: "all", label: "All", show: isAdmin },
+  ];
 
   const handleSelect = (c: CaseLog) => {
     if (c.id == null) return;
@@ -169,6 +202,9 @@ function Dashboard() {
                   className="h-9 w-64 pl-8 bg-card"
                 />
               </div>
+              <Button size="sm" variant="outline" onClick={() => navigate({ to: "/dashboard/staff" })}>
+                <Users className="h-4 w-4" /> Staff
+              </Button>
               <Button size="sm" variant="outline" onClick={() => refetch()} disabled={isFetching}>
                 <RefreshCw className={`h-4 w-4 ${isFetching ? "animate-spin" : ""}`} />
                 Refresh
@@ -178,6 +214,25 @@ function Dashboard() {
               </Button>
             </div>
           </div>
+
+          <div className="mt-4 flex gap-1 border-b border-border/60">
+            {SCOPES.filter((s) => s.show).map((s) => {
+              const active = scope === s.key;
+              return (
+                <button
+                  key={s.key}
+                  onClick={() => updateSearch({ scope: s.key })}
+                  className={`relative px-3 py-2 text-sm transition-colors
+                    ${active ? "font-semibold text-foreground" : "font-medium text-muted-foreground/80 hover:text-foreground"}`}
+                >
+                  {s.label}
+                  {active && <span className="absolute inset-x-2 -bottom-px h-[2px] rounded-full bg-foreground" />}
+                </button>
+              );
+            })}
+          </div>
+
+
 
           <div className="mt-5 space-y-2.5">
             <OpsMetrics cases={allCases} activeKpi={kpiFilter} onSelect={handleKpiSelect} />
@@ -245,6 +300,7 @@ function Dashboard() {
                 caseLog={c}
                 selected={false}
                 onSelect={() => handleSelect(c)}
+                staffById={staffById}
               />
             ))
           )}

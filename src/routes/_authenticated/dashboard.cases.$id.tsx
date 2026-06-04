@@ -13,6 +13,9 @@ import { UrgencyBadge } from "@/components/UrgencyBadge";
 import { supabase, type CaseLog } from "@/lib/supabase";
 import { SAMPLE_CASES } from "@/lib/sample-cases";
 import { useCaseMutations } from "@/lib/case-mutations";
+import { AssignToControl } from "@/components/AssignToControl";
+import { useCurrentMembership, displayName } from "@/lib/clinic";
+import { useClinicStaff } from "@/lib/case-assignment";
 
 export const Route = createFileRoute("/_authenticated/dashboard/cases/$id")({
   head: () => ({ meta: [{ title: "Case — Clinic Intake Copilot" }] }),
@@ -118,6 +121,12 @@ function CaseView() {
     usingSample: isSampleId,
     onSampleUpdate: (_, patch) => setSampleOverride((p) => ({ ...p, ...patch })),
   });
+
+  const me = useCurrentMembership();
+  const staff = useClinicStaff();
+  const isAdmin = me.data?.role === "clinic_admin";
+  const canReassign = !isSampleId && (isAdmin || (caseLog?.assigned_user_id === me.data?.user_id));
+  const assigneeMember = staff.data?.find((s) => s.user_id === caseLog?.assigned_user_id) ?? null;
 
   const goBack = () => {
     if (window.history.length > 1) router.history.back();
@@ -243,8 +252,14 @@ function CaseView() {
             <Chip label="Escalation" value="Not required" className="border-border bg-card" />
           )}
           {assignedQueue && (
-            <Chip icon={UserPlus} label="Assigned" value={queueLabel(assignedQueue)} className="border-border bg-card" />
+            <Chip icon={UserPlus} label="Queue" value={queueLabel(assignedQueue)} className="border-border bg-card" />
           )}
+          <Chip
+            icon={UserPlus}
+            label="Assigned to"
+            value={assigneeMember ? displayName(assigneeMember) : caseLog.assigned_user_id ? "—" : "Unassigned"}
+            className="border-border bg-card"
+          />
         </div>
 
         {/* Actions */}
@@ -253,9 +268,10 @@ function CaseView() {
             <CheckCircle2 className="h-4 w-4" />
             {status === "reviewed" ? "Reviewed" : "Mark reviewed"}
           </Button>
+          <AssignToControl caseLog={caseLog} canReassign={canReassign} />
           <Button size="sm" variant="ghost" disabled={assignDisabled} onClick={() => assignCase.mutate({ c: caseLog, queue: "nurse_review" })}>
             <UserPlus className="h-4 w-4" />
-            {assignedQueue === "nurse_review" ? "Nurse ✓" : "Nurse"}
+            {assignedQueue === "nurse_review" ? "Nurse queue ✓" : "Nurse queue"}
           </Button>
           <Button size="sm" variant="ghost" disabled={assignDisabled} onClick={() => assignCase.mutate({ c: caseLog, queue: "front_desk" })}>
             <UserPlus className="h-4 w-4" />
