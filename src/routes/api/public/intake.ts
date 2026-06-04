@@ -261,7 +261,7 @@ export const Route = createFileRoute("/api/public/intake")({
           .insert({
             session_id,
             user_message: message,
-            age_band: d.age_band ?? null,
+            age_band: ageToBand(d.age ?? parseAgeOrDob(d.age_or_dob)) ?? d.age_band ?? null,
             contact_channel: d.contact_channel ?? null,
             reason_for_visit: d.reason_for_visit ?? null,
             urgency_level: t.urgency_level,
