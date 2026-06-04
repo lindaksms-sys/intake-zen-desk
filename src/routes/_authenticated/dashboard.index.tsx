@@ -202,6 +202,9 @@ function Dashboard() {
                   className="h-9 w-64 pl-8 bg-card"
                 />
               </div>
+              <Button size="sm" variant="outline" onClick={() => navigate({ to: "/dashboard/staff" })}>
+                <Users className="h-4 w-4" /> Staff
+              </Button>
               <Button size="sm" variant="outline" onClick={() => refetch()} disabled={isFetching}>
                 <RefreshCw className={`h-4 w-4 ${isFetching ? "animate-spin" : ""}`} />
                 Refresh
@@ -211,6 +214,22 @@ function Dashboard() {
               </Button>
             </div>
           </div>
+
+          <div className="mt-4 flex gap-1 border-b border-border/60">
+            {SCOPES.filter((s) => s.show).map((s) => {
+              const active = scope === s.key;
+              return (
+                <button
+                  key={s.key}
+                  onClick={() => updateSearch({ scope: s.key })}
+                  className={`relative px-3 py-2 text-sm transition-colors
+                    ${active ? "font-semibold text-foreground" : "font-medium text-muted-foreground/80 hover:text-foreground"}`}
+                >
+                  {s.label}
+                  {active && <span className="absolute inset-x-2 -bottom-px h-[2px] rounded-full bg-foreground" />}
+                </button>
+              );
+            })}
 
           <div className="mt-5 space-y-2.5">
             <OpsMetrics cases={allCases} activeKpi={kpiFilter} onSelect={handleKpiSelect} />
