@@ -122,6 +122,12 @@ function CaseView() {
     onSampleUpdate: (_, patch) => setSampleOverride((p) => ({ ...p, ...patch })),
   });
 
+  const me = useCurrentMembership();
+  const staff = useClinicStaff();
+  const isAdmin = me.data?.role === "clinic_admin";
+  const canReassign = !isSampleId && (isAdmin || (caseLog?.assigned_user_id === me.data?.user_id));
+  const assigneeMember = staff.data?.find((s) => s.user_id === caseLog?.assigned_user_id) ?? null;
+
   const goBack = () => {
     if (window.history.length > 1) router.history.back();
     else router.navigate({ to: "/dashboard" });
