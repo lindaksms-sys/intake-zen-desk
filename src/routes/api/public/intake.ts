@@ -2,6 +2,21 @@ import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 
+const CORS_HEADERS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Accept, Authorization",
+  "Access-Control-Max-Age": "86400",
+} as const;
+
+function jsonResponse(body: unknown, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { "Content-Type": "application/json", ...CORS_HEADERS },
+  });
+}
+
+
 
 const IntakeSchema = z.object({
   // Legacy single-message support
@@ -115,20 +130,22 @@ function triage(message: string) {
 export const Route = createFileRoute("/api/public/intake")({
   server: {
     handlers: {
+      OPTIONS: async () => new Response(null, { status: 204, headers: CORS_HEADERS }),
       POST: async ({ request }) => {
+
        try {
         let body: unknown;
         try {
           body = await request.json();
         } catch {
-          return Response.json({ error: "Invalid JSON" }, { status: 400 });
+          return jsonResponse({ error: "Invalid JSON" }, 400);
         }
 
         const parsed = IntakeSchema.safeParse(body);
         if (!parsed.success) {
-          return Response.json(
+          return jsonResponse(
             { error: "Invalid input", details: parsed.error.flatten() },
-            { status: 400 },
+            400,
           );
         }
 
@@ -178,9 +195,9 @@ export const Route = createFileRoute("/api/public/intake")({
             : d.message ?? "";
 
         if (message.trim().length < 3) {
-          return Response.json(
+          return jsonResponse(
             { error: "Please describe the reason for your visit." },
-            { status: 400 },
+            400,
           );
         }
 
@@ -229,13 +246,13 @@ export const Route = createFileRoute("/api/public/intake")({
 
         if (error) {
           console.error("[intake] insert failed", error);
-          return Response.json(
+          return jsonResponse(
             { error: "Could not save your message. Please try again." },
-            { status: 500 },
+            500,
           );
         }
 
-        return Response.json({
+        return jsonResponse({
           id: session_id,
           patient_message: t.patient_message,
           urgency_level: t.urgency_level,
@@ -243,9 +260,9 @@ export const Route = createFileRoute("/api/public/intake")({
         });
        } catch (err) {
          console.error("[intake] unhandled error", err);
-         return Response.json(
+         return jsonResponse(
            { error: "Submission failed. Please try again." },
-           { status: 500 },
+           500,
          );
        }
       },
