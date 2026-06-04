@@ -300,6 +300,7 @@ function Dashboard() {
                 caseLog={c}
                 selected={false}
                 onSelect={() => handleSelect(c)}
+                staffById={staffById}
               />
             ))
           )}
