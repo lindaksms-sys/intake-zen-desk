@@ -6,8 +6,7 @@
     "moduleResolution": "bundler",
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "noEmit": true,
-    "strict": true
+    "noEmit": true
   },
   "include": ["src"]
 }

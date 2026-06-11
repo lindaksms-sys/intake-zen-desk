@@ -7,14 +7,12 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const bundled = await bundle({
   entryPoint: path.resolve(__dirname, "../src/index.ts"),
-  webpackOverride: (config) => config,
+  webpackOverride: (c) => c,
 });
 
 const browser = await openBrowser("chrome", {
   browserExecutable: process.env.PUPPETEER_EXECUTABLE_PATH ?? "/bin/chromium",
-  chromiumOptions: {
-    args: ["--no-sandbox", "--disable-gpu", "--disable-dev-shm-usage"],
-  },
+  chromiumOptions: { args: ["--no-sandbox", "--disable-gpu", "--disable-dev-shm-usage"] },
   chromeMode: "chrome-for-testing",
 });
 
@@ -28,7 +26,7 @@ await renderMedia({
   composition,
   serveUrl: bundled,
   codec: "h264",
-  outputLocation: "/mnt/documents/clinic-copilot-demo.mp4",
+  outputLocation: "/mnt/documents/clinic-copilot-intro.mp4",
   puppeteerInstance: browser,
   muted: true,
   concurrency: 1,

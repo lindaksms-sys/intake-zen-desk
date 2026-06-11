@@ -1,13 +1,18 @@
+// Mirrors the app's oklch tokens, expressed as hex for Remotion rendering
 export const colors = {
-  bg: "#F4F7FB",
-  surface: "#FFFFFF",
-  ink: "#0B1B2B",
-  inkSoft: "#5A6B7B",
-  border: "#E2E8F0",
-  blue: "#1E6BE6",
-  blueSoft: "#DCE9FB",
-  teal: "#14B8A6",
-  amber: "#F59E0B",
-  red: "#EF4444",
-  green: "#10B981",
+  bg: "#FBFCFD",          // near-white background
+  bgSoft: "#F4F6F9",
+  fg: "#0B1220",          // near-black foreground
+  fgMuted: "#5B6573",
+  card: "#FFFFFF",
+  border: "#E5E9F0",
+  primary: "#1B2433",     // deep slate
+  // Clinic urgency
+  emergency: "#D94A3D",
+  emergencySoft: "#FBE9E7",
+  urgent: "#D89438",
+  urgentSoft: "#FBF1DC",
+  routine: "#3C72C9",
+  routineSoft: "#E6EEFA",
+  admin: "#7E8794",
 };
