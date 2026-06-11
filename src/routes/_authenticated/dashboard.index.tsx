@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { Activity, LogOut, RefreshCw, Search, Users } from "lucide-react";
+import { LogOut, RefreshCw, Search, Users } from "lucide-react";
 import { Toaster } from "@/components/ui/sonner";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -113,19 +113,9 @@ function Dashboard() {
       <Toaster position="top-right" />
 
       <main className="mx-auto max-w-[1400px] px-6 py-6">
-        {/* Brand header */}
-        <header className="flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-foreground text-background">
-              <Activity className="h-5 w-5" />
-            </div>
-            <div className="min-w-0">
-              <h1 className="truncate text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
-                Clinic Intake Copilot
-              </h1>
-              <p className="text-sm text-muted-foreground">AI-triaged incoming cases</p>
-            </div>
-          </div>
+        {/* Toolbar */}
+        <header className="flex flex-wrap items-center justify-end gap-4">
+
           <div className="flex items-center gap-2 flex-wrap">
             <div className="relative w-full sm:w-72">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />

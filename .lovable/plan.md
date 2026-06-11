@@ -1,27 +1,22 @@
 ## Goal
-Make `/dashboard` look like the HerFlow Overview screenshot — big "Overview" title, "Open Work Queue" pill, a 6-tile KPI grid, and an "INTAKE ACTIVITY" row of 4 voice tiles. The sidebar layout stays.
+Add a persistent collapsible sidebar to the dashboard with only real, working items. Move the Clinic Intake Copilot brand into the sidebar header and remove the duplicate brand row from the page body. No styling changes to existing dashboard content.
 
 ## Changes
 
-### Rewrite `src/routes/_authenticated/dashboard.index.tsx`
-Remove the old in-page header (Activity logo, search input, Staff/Refresh/Sign-out buttons, scope tabs, OpsMetrics, StatsCards, filter tabs, case list). Replace the page body with:
+### `src/components/AppSidebar.tsx` (recreate)
+Shadcn `Sidebar` with `collapsible="icon"`.
+- `SidebarHeader`: Activity icon tile + "Clinic Intake Copilot" / "AI-TRIAGED INCOMING CASES" caption.
+- `SidebarContent` group:
+  - Overview → `Link to="/dashboard"` (active when pathname === `/dashboard`)
+  - Staff → `Link to="/dashboard/staff"` (rendered only when `useCurrentMembership().data?.role === "clinic_admin"`)
+  - Public Intake Form → `<a href="/intake" target="_blank">` (external)
+- `SidebarFooter`: Sign out button → `await supabase.auth.signOut(); queryClient.clear(); navigate({ to: "/auth", replace: true })`.
 
-1. **Top toolbar inside the page**: a wide search input ("Search patients, episodes, tasks…"), a bell icon, and a user chip (initials + name + email pulled from the authenticated Supabase user). This sits under the existing layout header.
-2. **Heading row**: `Overview` (large, bold) + subtitle "Today at a glance — new intakes, urgent cases, bookings, and follow-ups." On the right, a teal pill button "Open Work Queue →" that navigates to `/dashboard` with `scope=unassigned` (closest existing "work queue" semantics).
-3. **KPI grid (6 cards)** computed from live `agent_case_logs` (fallback to `SAMPLE_CASES`):
-   - New intakes — created today, awaiting triage
-   - Urgent cases — open + emergency/urgent
-   - Booked consults — count of cases with `assigned_user_id` set this period
-   - Missed follow-ups — closed cases past 7 days with no follow-up flag (best-effort from existing fields; if not available, show 0)
-   - Inactive patients — placeholder 0
-   - Follow-up complete — closed today
-   Each card: tinted square icon (teal / amber / teal / rose / slate / green), big number, label, sublabel.
-4. **INTAKE ACTIVITY section**: small caption "INTAKE ACTIVITY" + subtitle "Voice and web submissions arriving today", with a right-aligned "Open Intake Queue →" link to `/intake`. Below: 4 tiles — Voice intakes today, Urgent voice intakes, Latest voice intake (time), Unresolved urgent alerts. Values derived from the same case data; unknown ones show "—" or 0.
+### `src/routes/_authenticated/dashboard.tsx`
+Wrap `<Outlet />` in `SidebarProvider` + `AppSidebar` + a thin header bar containing only `<SidebarTrigger />` so the sidebar can always be toggled.
 
-### Trim the layout
-- Keep `dashboard.tsx` layout + sidebar as-is.
-- Move the sign-out action into a small dropdown on the user chip in the new toolbar so the existing logout path stays reachable.
+### `src/routes/_authenticated/dashboard.index.tsx`
+Remove the brand block (Activity tile + "Clinic Intake Copilot" / "AI-triaged incoming cases") from the page header. Keep search, Refresh, and Sign-out controls untouched. Everything else (scope tabs, OpsMetrics, StatsCards, urgency tabs, case list) stays exactly as-is.
 
-### Out of scope
-- No new DB tables or migrations. Metrics use existing `agent_case_logs` fields with sensible fallbacks.
-- Case list, scope tabs, urgency filters, OpsMetrics, StatsCards components are removed from `/dashboard`. (They remain available — case detail still works at `/dashboard/cases/$id`. If you want a separate "Work Queue" page that keeps the old list, say so and I'll scaffold `/dashboard/queue`.)
+## Out of scope
+- No new routes, no placeholder nav items, no visual restyling of cards/tabs/badges.
