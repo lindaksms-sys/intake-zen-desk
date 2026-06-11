@@ -1,22 +1,25 @@
-## Goal
-Add a persistent collapsible sidebar to the dashboard with only real, working items. Move the Clinic Intake Copilot brand into the sidebar header and remove the duplicate brand row from the page body. No styling changes to existing dashboard content.
+Concatenate the five existing Clinic Copilot MP4s in `/mnt/documents/` into a single continuous video using ffmpeg (already in PATH, no re-render needed).
 
-## Changes
+## Order
 
-### `src/components/AppSidebar.tsx` (recreate)
-Shadcn `Sidebar` with `collapsible="icon"`.
-- `SidebarHeader`: Activity icon tile + "Clinic Intake Copilot" / "AI-TRIAGED INCOMING CASES" caption.
-- `SidebarContent` group:
-  - Overview → `Link to="/dashboard"` (active when pathname === `/dashboard`)
-  - Staff → `Link to="/dashboard/staff"` (rendered only when `useCurrentMembership().data?.role === "clinic_admin"`)
-  - Public Intake Form → `<a href="/intake" target="_blank">` (external)
-- `SidebarFooter`: Sign out button → `await supabase.auth.signOut(); queryClient.clear(); navigate({ to: "/auth", replace: true })`.
+1. `clinic-copilot-intro.mp4` (15s brand intro)
+2. `clinic-copilot-signin.mp4` (20s sign-in → dashboard)
+3. `clinic-copilot-intake.mp4` (30s intake submission)
+4. `clinic-copilot-agent-terminal.mp4` (20s agent terminal)
+5. `clinic-copilot-dashboard-result.mp4` (25s dashboard result + closing)
 
-### `src/routes/_authenticated/dashboard.tsx`
-Wrap `<Outlet />` in `SidebarProvider` + `AppSidebar` + a thin header bar containing only `<SidebarTrigger />` so the sidebar can always be toggled.
+Total: ~110s.
 
-### `src/routes/_authenticated/dashboard.index.tsx`
-Remove the brand block (Activity tile + "Clinic Intake Copilot" / "AI-triaged incoming cases") from the page header. Keep search, Refresh, and Sign-out controls untouched. Everything else (scope tabs, OpsMetrics, StatsCards, urgency tabs, case list) stays exactly as-is.
+## Steps
 
-## Out of scope
-- No new routes, no placeholder nav items, no visual restyling of cards/tabs/badges.
+1. Verify all 5 source files exist in `/mnt/documents/` and probe each with `ffprobe` to confirm matching resolution (1920×1080), fps (30), and codec (h264).
+2. If all streams match: use ffmpeg concat demuxer with `-c copy` (stream copy, lossless, fast — no re-encode).
+3. If any mismatch: re-encode with a single ffmpeg command using the concat filter to normalize to 1920×1080 / 30fps / h264 / yuv420p.
+4. Output to `/mnt/documents/clinic-copilot-full.mp4`.
+5. Probe the final file to confirm duration ≈ 110s and report path + size.
+
+## Notes
+
+- No Remotion rebuild — purely a post-process stitch of files already rendered.
+- Filenames above are based on the render script history; will adjust if any are named differently on disk.
+- No transitions added between segments (request was "continuous"); can add crossfades in a follow-up if desired.
