@@ -213,13 +213,12 @@ function Dashboard() {
               Today at a glance — new intakes, urgent cases, bookings, and follow-ups.
             </p>
           </div>
-          <Link
-            to="/dashboard"
-            search={{ scope: "unassigned" } as never}
+          <button
+            type="button"
             className="inline-flex items-center gap-1.5 rounded-full bg-teal-700 px-4 py-2 text-sm font-medium text-white hover:bg-teal-800 transition-colors"
           >
             Open Work Queue <ArrowRight className="h-4 w-4" />
-          </Link>
+          </button>
         </div>
 
         {/* KPI grid */}
