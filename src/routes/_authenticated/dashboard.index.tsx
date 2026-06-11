@@ -114,10 +114,19 @@ function Dashboard() {
 
       <main className="mx-auto max-w-[1400px] px-6 py-6">
         {/* Toolbar */}
-        <header className="flex flex-wrap items-center justify-end gap-4">
+        <header className="flex flex-wrap items-center justify-between gap-4">
+          <Link to="/dashboard" className="flex items-center gap-2 min-w-0">
+            <span className="flex h-8 w-8 items-center justify-center rounded-md bg-foreground text-background">
+              <Activity className="h-4 w-4" />
+            </span>
+            <span className="flex flex-col leading-tight min-w-0">
+              <span className="text-sm font-semibold text-foreground truncate">Clinic Intake Copilot</span>
+              <span className="hidden sm:inline text-[11px] text-muted-foreground">Staff dashboard</span>
+            </span>
+          </Link>
 
-          <div className="flex items-center gap-2 flex-wrap">
-            <div className="relative w-full sm:w-72">
+          <div className="flex items-center gap-2 flex-wrap justify-end">
+            <div className="relative w-full sm:w-72 order-last sm:order-none">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 value={q}
@@ -128,11 +137,11 @@ function Dashboard() {
             </div>
             {isAdmin && (
               <Button variant="outline" size="sm" onClick={() => navigate({ to: "/dashboard/staff" })}>
-                <Users className="mr-2 h-4 w-4" /> Staff
+                <Users className="h-4 w-4 sm:mr-2" /> <span className="hidden sm:inline">Staff</span>
               </Button>
             )}
             <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching}>
-              <RefreshCw className={`mr-2 h-4 w-4 ${isFetching ? "animate-spin" : ""}`} /> Refresh
+              <RefreshCw className={`h-4 w-4 sm:mr-2 ${isFetching ? "animate-spin" : ""}`} /> <span className="hidden sm:inline">Refresh</span>
             </Button>
             <Button variant="ghost" size="icon" aria-label="Sign out" onClick={handleSignOut}>
               <LogOut className="h-4 w-4" />
