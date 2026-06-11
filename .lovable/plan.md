@@ -1,38 +1,27 @@
 ## Goal
-Wrap the authenticated dashboard in a shadcn `Sidebar` matching the HerFlow look from the demo screenshot: brand block at top, OPERATE section, CONFIGURE section, collapsible to an icon rail.
+Make `/dashboard` look like the HerFlow Overview screenshot — big "Overview" title, "Open Work Queue" pill, a 6-tile KPI grid, and an "INTAKE ACTIVITY" row of 4 voice tiles. The sidebar layout stays.
 
 ## Changes
 
-### 1. New `src/components/AppSidebar.tsx`
-- Uses shadcn `Sidebar` with `collapsible="icon"`.
-- Brand header: small dark tile + "HerFlow AI" / "CARE COORDINATION" caption.
-- Two `SidebarGroup`s:
-  - **OPERATE** — Overview, Work Queue, Patients, Appointments, Intake Queue, Open Public Intake Form
-  - **CONFIGURE** — Pathways, Campaigns, Reporting, Settings
-- Active item highlighted via `useRouterState` against current pathname.
-- Items with no route yet render as non-navigating buttons (visual only) so the layout matches the screenshot without breaking type-safe `<Link>`. Routed items today: Overview (`/dashboard`), Staff/Patients (`/dashboard/staff`), Open Public Intake Form (`/intake`, opens new tab).
-- Lucide icons: `LayoutGrid, ListChecks, Users, CalendarDays, PhoneCall, ExternalLink, GitBranch, Megaphone, BarChart3, Settings`.
+### Rewrite `src/routes/_authenticated/dashboard.index.tsx`
+Remove the old in-page header (Activity logo, search input, Staff/Refresh/Sign-out buttons, scope tabs, OpsMetrics, StatsCards, filter tabs, case list). Replace the page body with:
 
-### 2. Edit `src/routes/_authenticated/dashboard.tsx`
-Replace the bare `<Outlet />` with:
-```tsx
-<SidebarProvider>
-  <div className="min-h-screen flex w-full">
-    <AppSidebar />
-    <div className="flex-1 flex flex-col">
-      <header className="h-12 flex items-center border-b px-2">
-        <SidebarTrigger />
-      </header>
-      <main className="flex-1"><Outlet /></main>
-    </div>
-  </div>
-</SidebarProvider>
-```
-This makes the sidebar apply to all `/dashboard/*` routes (index, staff, cases/$id).
+1. **Top toolbar inside the page**: a wide search input ("Search patients, episodes, tasks…"), a bell icon, and a user chip (initials + name + email pulled from the authenticated Supabase user). This sits under the existing layout header.
+2. **Heading row**: `Overview` (large, bold) + subtitle "Today at a glance — new intakes, urgent cases, bookings, and follow-ups." On the right, a teal pill button "Open Work Queue →" that navigates to `/dashboard` with `scope=unassigned` (closest existing "work queue" semantics).
+3. **KPI grid (6 cards)** computed from live `agent_case_logs` (fallback to `SAMPLE_CASES`):
+   - New intakes — created today, awaiting triage
+   - Urgent cases — open + emergency/urgent
+   - Booked consults — count of cases with `assigned_user_id` set this period
+   - Missed follow-ups — closed cases past 7 days with no follow-up flag (best-effort from existing fields; if not available, show 0)
+   - Inactive patients — placeholder 0
+   - Follow-up complete — closed today
+   Each card: tinted square icon (teal / amber / teal / rose / slate / green), big number, label, sublabel.
+4. **INTAKE ACTIVITY section**: small caption "INTAKE ACTIVITY" + subtitle "Voice and web submissions arriving today", with a right-aligned "Open Intake Queue →" link to `/intake`. Below: 4 tiles — Voice intakes today, Urgent voice intakes, Latest voice intake (time), Unresolved urgent alerts. Values derived from the same case data; unknown ones show "—" or 0.
 
-### 3. Existing page chrome
-Leave `dashboard.index.tsx` content as-is — the sidebar adds the chrome around it. If the inner page has its own top bar/search, it stays; sidebar trigger lives in the new outer header so it's always reachable when collapsed.
+### Trim the layout
+- Keep `dashboard.tsx` layout + sidebar as-is.
+- Move the sign-out action into a small dropdown on the user chip in the new toolbar so the existing logout path stays reachable.
 
-## Out of scope
-- Not creating new routes for Work Queue, Appointments, Pathways, Campaigns, Reporting, Settings — those render as inert sidebar items. Tell me if you want me to scaffold any of them.
-- Not changing the intake form or auth pages.
+### Out of scope
+- No new DB tables or migrations. Metrics use existing `agent_case_logs` fields with sensible fallbacks.
+- Case list, scope tabs, urgency filters, OpsMetrics, StatsCards components are removed from `/dashboard`. (They remain available — case detail still works at `/dashboard/cases/$id`. If you want a separate "Work Queue" page that keeps the old list, say so and I'll scaffold `/dashboard/queue`.)
