@@ -1,11 +1,11 @@
 import { Composition } from "remotion";
-import { DashboardResult } from "./scenes/DashboardResult";
+import { ScreenDemo } from "./scenes/ScreenDemo";
 
 export const RemotionRoot = () => (
   <Composition
     id="main"
-    component={DashboardResult}
-    durationInFrames={750}
+    component={ScreenDemo}
+    durationInFrames={600}
     fps={30}
     width={1920}
     height={1080}
