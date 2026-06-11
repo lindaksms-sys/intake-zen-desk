@@ -26,10 +26,10 @@ await renderMedia({
   composition,
   serveUrl: bundled,
   codec: "h264",
-  outputLocation: "/mnt/documents/clinic-copilot-signin.mp4",
+  outputLocation: "/tmp/full-demo-muted.mp4",
   puppeteerInstance: browser,
   muted: true,
-  concurrency: 1,
+  concurrency: 2,
 });
 
 await browser.close({ silent: false });
