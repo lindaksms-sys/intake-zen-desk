@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
 const FALLBACK_SUPABASE_URL = 'https://solhhlgccmrpzzljvjqb.supabase.co';
-const FALLBACK_SUPABASE_PUBLISHABLE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzb2xoaGxnY2NtnXB6emxqdnpxYiIsInJvbGUiOiJhbm9uIiwiaWF0IjoxNzgwMzI4MDk5LCJleHAiOjIwOTU5MDQwOTl9.CLMaxqjWeo3OLgSzeIpOi-E3CBdgjKenh9Rp3ndDQ84';
+const FALLBACK_SUPABASE_PUBLISHABLE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzb2xoaGxnY2NjbXJwenpsanZqcWIiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc4MDMyODA5OSwiZXhwIjoyMDk1OTA0MDk5fQ.CLMaxqjWeo3OLgSzeIpOi-E3CBdgjKenh9Rp3ndDQ84';
 
 function createSupabaseClient() {
   // Use import.meta.env for client-side (Vite build-time replacement)
