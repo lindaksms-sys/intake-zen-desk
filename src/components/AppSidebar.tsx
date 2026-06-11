@@ -10,8 +10,9 @@ import {
   Megaphone,
   BarChart3,
   Settings,
-  Plus,
+  Activity,
 } from "lucide-react";
+
 import {
   Sidebar,
   SidebarContent,
@@ -61,20 +62,19 @@ export function AppSidebar() {
       <SidebarHeader>
         <div className="flex items-center gap-3 px-2 py-2">
           <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-foreground text-background">
-            <Plus className="h-4 w-4" />
+            <Activity className="h-4 w-4" />
           </div>
           {!collapsed && (
             <div className="min-w-0 leading-tight">
-              <div className="truncate text-sm font-bold">
-                HerFlow <span className="text-primary">AI</span>
-              </div>
-              <div className="text-[10px] font-semibold tracking-widest text-muted-foreground">
-                CARE COORDINATION
+              <div className="truncate text-sm font-semibold">Clinic Intake Copilot</div>
+              <div className="text-[10px] font-medium tracking-wider text-muted-foreground">
+                AI-TRIAGED INCOMING CASES
               </div>
             </div>
           )}
         </div>
       </SidebarHeader>
+
 
       <SidebarContent>
         <NavSection label="OPERATE" items={operate} isActive={isActive} collapsed={collapsed} />
