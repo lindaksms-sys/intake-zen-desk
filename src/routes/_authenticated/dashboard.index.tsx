@@ -59,10 +59,11 @@ function Dashboard() {
   const cases = (data && data.length > 0) ? data : SAMPLE_CASES;
   const staffQuery = useClinicStaff();
   const staffById = useMemo(() => {
-    const m = new Map<string, (typeof staffQuery.data extends Array<infer T> ? T : never)>();
+    const m = new Map<string, NonNullable<typeof staffQuery.data>[number]>();
     (staffQuery.data ?? []).forEach((s) => m.set(s.user_id, s));
     return m;
   }, [staffQuery.data]);
+
 
   const filtered = useMemo(() => {
     return cases.filter((c) => {
