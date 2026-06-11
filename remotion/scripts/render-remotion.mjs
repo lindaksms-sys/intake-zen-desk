@@ -30,7 +30,7 @@ await renderMedia({
   codec: "h264",
   outputLocation: "/mnt/documents/clinic-copilot-demo.mp4",
   puppeteerInstance: browser,
-  muted: false,
+  muted: true,
   concurrency: 1,
 });
 
