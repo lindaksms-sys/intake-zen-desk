@@ -1,11 +1,11 @@
 import { Composition } from "remotion";
-import { AgentTerminal } from "./scenes/AgentTerminal";
+import { DashboardResult } from "./scenes/DashboardResult";
 
 export const RemotionRoot = () => (
   <Composition
     id="main"
-    component={AgentTerminal}
-    durationInFrames={600}
+    component={DashboardResult}
+    durationInFrames={750}
     fps={30}
     width={1920}
     height={1080}
