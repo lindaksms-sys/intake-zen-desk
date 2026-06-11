@@ -1,7 +1,7 @@
 import {
   AbsoluteFill,
   Series,
-  OffthreadVideo,
+  Video,
   staticFile,
   useCurrentFrame,
   useVideoConfig,
@@ -143,7 +143,7 @@ function LowerThird({ step, label, segmentFrames }: { step: number; label: strin
 function Segment({ src, frames, step, label }: { src: string; frames: number; step: number; label: string }) {
   return (
     <AbsoluteFill style={{ background: colors.bg }}>
-      <OffthreadVideo src={staticFile(`clips/${src}`)} muted />
+      <Video src={staticFile(`clips/${src}`)} muted />
       <LowerThird step={step} label={label} segmentFrames={frames} />
     </AbsoluteFill>
   );
