@@ -26,7 +26,7 @@ await renderMedia({
   composition,
   serveUrl: bundled,
   codec: "h264",
-  outputLocation: "/mnt/documents/clinic-copilot-intro.mp4",
+  outputLocation: "/mnt/documents/clinic-copilot-intake-demo.mp4",
   puppeteerInstance: browser,
   muted: true,
   concurrency: 1,
