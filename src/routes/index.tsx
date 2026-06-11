@@ -10,7 +10,7 @@ function IndexRedirect() {
   const navigate = useNavigate();
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
-      navigate({ to: data.user ? "/dashboard" : "/intake", replace: true });
+      navigate({ to: data.user ? "/dashboard" : "/auth", replace: true });
     });
   }, [navigate]);
   return null;
