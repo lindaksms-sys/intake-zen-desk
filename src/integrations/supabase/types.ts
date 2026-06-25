@@ -103,6 +103,36 @@ export type Database = {
           },
         ]
       }
+      beta_signups: {
+        Row: {
+          biggest_challenge: string
+          created_at: string
+          email: string
+          feedback_call_interest: boolean
+          id: string
+          name: string
+          stage: string
+        }
+        Insert: {
+          biggest_challenge: string
+          created_at?: string
+          email: string
+          feedback_call_interest?: boolean
+          id?: string
+          name: string
+          stage: string
+        }
+        Update: {
+          biggest_challenge?: string
+          created_at?: string
+          email?: string
+          feedback_call_interest?: boolean
+          id?: string
+          name?: string
+          stage?: string
+        }
+        Relationships: []
+      }
       businesses: {
         Row: {
           created_at: string
